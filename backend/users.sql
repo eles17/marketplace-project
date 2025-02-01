@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS users(
     password VARCHAR(255) NOT NULL
 );
 
+ALTER TABEL products ADD COLUMN views INT DEFAULT 0;
+
+
+
 INSERT INTO users (name, email) VALUES
 ('Lev Starman', 'lev.starman1@gmail.com'),
 ('Max Starman', 'maxs@gmail.com'),
