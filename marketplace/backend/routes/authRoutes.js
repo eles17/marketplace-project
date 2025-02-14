@@ -73,7 +73,7 @@ router.post('/login',
 
             //generate JWT token
             const token = jwt.sign(
-                { id: user.rows[0].id, email: user.rows[0].email },
+                { id: user.rows[0].id, email: user.rows[0].email, is_admin: user.rows[0].is_admin },
                 process.env.JWT_SECRET,
                 { expiresIn: "1h"}
             );
