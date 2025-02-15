@@ -6,6 +6,7 @@ const pool = require('./config/db'); // import databes connection
 const authRoutes = require('./routes/authRoutes'); // import auth routes
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,8 @@ app.get('/api/protected', authMiddleware, (req, res) => {
         user: req.user 
     })
 })
+
+app.use('/api/chat', chatRoutes);
 
 app.use('/api/admin', adminRoutes);
 
