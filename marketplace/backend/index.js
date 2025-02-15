@@ -2,7 +2,7 @@ require('dotenv').config();
 const authMiddleware = require('./middleware/authMiddleware'); // adds protected route
 const express = require('express');
 const cors = require('cors');
-const pool = require('./config/db'); // import exsisting databes connection (already in db.js)
+const pool = require('./config/db'); // import exsisting databes connection (already decleared in db.js)
 const authRoutes = require('./routes/authRoutes'); // import auth routes
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
         try{
             // store message in DB
             const newMessage = await pool.query(
-                "INSERT INTO messages (sender_id, receiver_id, listing_id, message) VALUES ($1, $2, $3, $4) RETURNING *",
+                "INSERT INTO messages (sender_id, receiver_id, listing_id, message, is_read) VALUES ($1, $2, $3, $4, FALSE) RETURNING *",
                 [sender_id, receiver_id, listing_id, message]
             );
             //emit message to receiver
@@ -44,6 +44,21 @@ io.on('connection', (socket) => {
             console.error("WebSocket Message Storage Error:", err);
         }
     });
+
+    socket.on('mark_as_read', async (data) =>{
+        const {message_ids} = data;
+
+        try{
+            await pool.query(
+                "UPDATE messages SET is_read = TRUE WHERE id = ANY($1::int[]",
+                [message_ids]
+            );
+            console.log(`Messages Marked as Read: ${message_ids}`);
+        } catch (err){
+            console.error("Mark As Read Error:", err);
+        }
+    });
+
     //handle disconnection
     socket.on('disconnect', () => {
         console.log(`User Disconnected: ${socket.id}`);
