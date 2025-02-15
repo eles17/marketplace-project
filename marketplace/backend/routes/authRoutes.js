@@ -65,6 +65,11 @@ router.post('/login',
                 return res.status(400).json({ message: "Invalid email or password"});
             }
 
+            //check if user is banned
+            if (user.rows[0].is_banned){
+                return res.status(403).json({message: "Your account has been banned. Contact support for assistance."});
+            }
+
             //compare passwords
             const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
             if (!validPassword){
@@ -73,7 +78,12 @@ router.post('/login',
 
             //generate JWT token
             const token = jwt.sign(
-                { id: user.rows[0].id, email: user.rows[0].email, is_admin: user.rows[0].is_admin },
+                { 
+                    id: user.rows[0].id,
+                    email: user.rows[0].email,
+                    is_admin: user.rows[0].is_admin,
+                    is_banned: user.rows[0].is_banned
+                 },
                 process.env.JWT_SECRET,
                 { expiresIn: "1h"}
             );

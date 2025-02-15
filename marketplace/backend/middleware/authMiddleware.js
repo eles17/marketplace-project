@@ -15,6 +15,11 @@ module.exports = function(req, res, next){
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        //check if user is banned
+        if (decoded.is_banned){
+            return res.status(403).json({message: "our account has been banned."});
+        }
+
         req.user = decoded; // Attach user data to request
         next(); // proceed to next middleware or route handlar ---continues processing the request
     } catch (err){

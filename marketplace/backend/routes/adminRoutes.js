@@ -5,6 +5,33 @@ const pool = require('../config/db');
 
 const router = express.Router();
 
+
+// ban a user
+router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    try{
+        await pool.query("UPDATE users SET is_banned = TRUE WHERE id = $1", [id]);
+        res.json({message: "User has been banned."});
+    } catch (err){
+        console.error("Ban User Error:", err);
+        res.status(500).json({ error: "Server error"})
+    }
+});
+
+// unban user
+router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+
+    try{
+        await pool.query("UPDATE users SET is_banned = FALSE WHERE id = $1", [id]);
+        res.json({message: "User has been unbanned."});
+    } catch (err){
+        console.error("Unban User Error:", err);
+        res.status(500).json({ error: "Server error"})
+    }
+});
+
 // get all users that are admins --> ADMINS ONLY
 router.get('/users', authMiddleware, adminMiddleware, async(req, res) => {
     try{
