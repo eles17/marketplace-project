@@ -23,7 +23,7 @@ CREATE TABLE products (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
-    delivery_option VARCHAR(50) CHECK (delivery_option IN ('Self-Pickup', 'Postal Delivery', 'Both')),
+    delivery_option VARCHAR(50) CHECK (delivery_option IN ('Self-Pickup', 'Postal Delivery', 'Both', 'Courier', 'Express')),
     condition VARCHAR(50) CHECK (condition IN ('New', 'Used', 'Broken')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
