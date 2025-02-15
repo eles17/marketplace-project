@@ -11,8 +11,13 @@ router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) =
     const { id } = req.params;
 
     try{
-        await pool.query("UPDATE users SET is_banned = TRUE WHERE id = $1", [id]);
-        res.json({message: "User has been banned."});
+        const result = await pool.query("UPDATE users SET is_banned = TRUE WHERE id = $1", [id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        console.log(`User ID ${id} has been banned.`);
+        res.json({message: "User has been banned.", user: result.rows[0]});
     } catch (err){
         console.error("Ban User Error:", err);
         res.status(500).json({ error: "Server error"})
@@ -24,8 +29,13 @@ router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res)
     const { id } = req.params;
 
     try{
-        await pool.query("UPDATE users SET is_banned = FALSE WHERE id = $1", [id]);
-        res.json({message: "User has been unbanned."});
+        const result = await pool.query("UPDATE users SET is_banned = FALSE WHERE id = $1", [id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+        console.log(`User ID ${id} has been unband.`);
+        res.json({message: "User has been unband.", user: result.rows[0]});
     } catch (err){
         console.error("Unban User Error:", err);
         res.status(500).json({ error: "Server error"})
