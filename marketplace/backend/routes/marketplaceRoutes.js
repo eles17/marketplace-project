@@ -31,11 +31,11 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
         }
         if (min_price){
             query += " AND price >= $" + (queryParams.length + 1);
-            queryParams(min_price);
+            queryParams.push(min_price);
         }
         if (max_price){
             query += " AND price <= $" + (queryParams.length + 1);
-            queryParams(max_price);
+            queryParams.push(max_price);
         }
         if (search){
             query += " AND (name ILIKE $" + (queryParams.length + 1) + " OR description ILIKE $" + (queryParams.length + 2) + ")";
