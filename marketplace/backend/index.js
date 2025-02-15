@@ -9,11 +9,42 @@ const adminRoutes = require('./routes/adminRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const http = require('http'); //fro websocket server
 const { Server } = require('socket.io'); // import socket.io
+const nodemailer = require('nodemailer'); // import nodemailer for emial notifications
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, //your email
+        pass: process.env.EMAIL_PASS //your email password (app password for security)
+    }
+});
+
+// function to send email notification
+async function sendEmailNotification(receiver_id, message){
+    try{
+        //fetch the receiver email
+        const userQuery = await pool.query("SELECT email FROM users WHERE id = $1", [receiver_id]);
+        if (userQuery.rows.length === 0) return;
+
+        const receiverEmail = userQuery.rows[0].email;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: receiverEmail,
+            subject: "New Message Notification",
+            text: `You have received a new message: "${message}". Login to reply.`
+        };
+        await transporter.sendMail(mailOptions);
+        console.log(`Email notification sent to ${receiverEmail}`);
+    }catch (err){
+        console.error("Error sending email notification:", err);
+    }
+};
 
 //websocket server setup
 const server = http.createServer(app);
@@ -28,6 +59,12 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
+    //store user connections
+    socket.on('register', (userId) =>{
+        socket.userId = userId;
+        console.log(`User ${userId} registered for real-time notifications.`);
+    });
+
     // handle incoming messages
     socket.on('send_message', async(data) =>{
         const {sender_id, receiver_id, listing_id, message } = data;
@@ -40,6 +77,14 @@ io.on('connection', (socket) => {
             );
             //emit message to receiver
             io.emit(`receive_message_${receiver_id}`, newMessage.rows[0]);
+
+            //check if user is online before sending email
+            const sockets = await io.fetchSockets();
+            const isOnline = sockets.some(socket => socket.userId === receiver_id);
+
+            if(!isOnline){
+                sendEmailNotification(receiver_id, message);
+            }
         }catch (err){
             console.error("WebSocket Message Storage Error:", err);
         }
@@ -50,7 +95,7 @@ io.on('connection', (socket) => {
 
         try{
             await pool.query(
-                "UPDATE messages SET is_read = TRUE WHERE id = ANY($1::int[]",
+                "UPDATE messages SET is_read = TRUE WHERE id = ANY($1::int[])",
                 [message_ids]
             );
             console.log(`Messages Marked as Read: ${message_ids}`);
