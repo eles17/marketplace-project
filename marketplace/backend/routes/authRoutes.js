@@ -66,10 +66,10 @@ router.post('/login', loginLimiter,
         body('email').isEmail().withMessage('Invalid email format'),
         body('password').exists().withMessage('Password is required')
     ],
-    async (req, res) => {
+    async (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return next({ statusCode: 400, message: errors.array()[0].msg });
         }
 
         const { email, password } = req.body;
@@ -77,18 +77,18 @@ router.post('/login', loginLimiter,
         try { //check if the user exists
             const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
             if (user.rows.length === 0) {
-                return res.status(400).json({ message: "Invalid email or password"});
+                return next({ statusCode: 400, message: "Invalid email or password" });
             }
 
             //check if user is banned
             if (user.rows[0].is_banned){
-                return res.status(403).json({message: "Your account has been banned. Contact support for assistance."});
+                return next({ statusCode: 400, message: "Your account has been banned. Contact support for assistance." });
             }
 
             //compare passwords
             const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
             if (!validPassword){
-                return res.status(400).json({ message: "Invalid email or password"});
+                return next({ statusCode: 400, message: "Invalid email or password" });
             }
 
             //generate JWT token
@@ -106,7 +106,7 @@ router.post('/login', loginLimiter,
             res.json({ message: "Login successful", token });
         }catch (err) {
             console.error("Login Error:", err);
-            res.status(500).json({ error: "Server error"});
+            next(err); // pass error to global error handler
         }
     }
 );

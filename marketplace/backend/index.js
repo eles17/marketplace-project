@@ -12,11 +12,13 @@ const { Server } = require('socket.io'); // import socket.io
 const nodemailer = require('nodemailer'); // import nodemailer for emial notifications
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(compression()); // enable GZIP compression
+app.use(errorHandler); 
 
 const apiLimiter = rateLimit({
     windowMS: 15 * 60 * 1000,
@@ -143,6 +145,18 @@ app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/auth', authRoutes);
 
 app.use("/api/", apiLimiter);
+
+app.use((err, req, res, next) => {
+    if (err.code === "23505") { // Unique constraint violation
+        err.message = "Duplicate entry detected.";
+    } else if (err.code === "23503") { // Foreign key violation
+        err.message = "Invalid reference. Ensure related data exists.";
+    } else if (err.code === "23514") { // Check constraint violation
+        err.message = "Invalid data format.";
+    }
+
+    next(err);
+});
 
 //Start server
 const PORT= process.env.PORT || 5001;
