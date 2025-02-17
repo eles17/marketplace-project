@@ -10,10 +10,20 @@ const chatRoutes = require('./routes/chatRoutes');
 const http = require('http'); //fro websocket server
 const { Server } = require('socket.io'); // import socket.io
 const nodemailer = require('nodemailer'); // import nodemailer for emial notifications
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(compression()); // enable GZIP compression
+
+const apiLimiter = rateLimit({
+    windowMS: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests from this IP, please try again later."
+});
+
 
 
 const transporter = nodemailer.createTransport({
@@ -121,7 +131,8 @@ app.get('/api/protected', authMiddleware, (req, res) => {
         message: "This is a protected route!",
         user: req.user 
     })
-})
+});
+
 
 app.use('/api/chat', chatRoutes);
 
@@ -131,18 +142,7 @@ app.use('/api/marketplace', marketplaceRoutes);
 
 app.use('/api/auth', authRoutes);
 
-
-
-//test databse connection
-/*app.get('/test-db', async (req, res) => {
-    try{
-        const result =await pool.query('SELECT NOW()');
-        res.json({ message: "Database is working", time: result.rows[0].now });
-    }catch(err){
-        console.error("Database error:", err);
-        res.status(500).json({ error: "Database connection failed"});
-    }
-});*/
+app.use("/api/", apiLimiter);
 
 //Start server
 const PORT= process.env.PORT || 5001;

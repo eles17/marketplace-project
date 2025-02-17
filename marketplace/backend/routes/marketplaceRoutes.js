@@ -4,8 +4,34 @@ const pool = require('../config/db');
 const multer = require('multer');
 const path = require('path');
 const { validateUserInput } = require('../middleware/validateMiddleware'); 
+const NodeCache = require('node-cache');
+
+const cache = new NodeCache({ stdTTL:600}); //cache data for 10 min
 
 const router = express.Router();
+
+router.get('/categories', async(req,res) => {
+    try{
+        //check cache first
+        const cachedCategories = cache.get("categories");
+        if(cachedCategories){
+            console.log("Serving catagories from cache");
+            return res.json(cachedCategories);
+        }
+
+        //fetch from DB if not cached
+        console.log("Fetching categories from database...");
+        const catagories = await pool.query("SELECT * FROM categories");
+
+        cache.set("categories", cachedCategories.rows); //store in cache
+        
+        res.json(cachedCategories.rows);
+    } catch (err){
+        console.error("Fetch Categories Error:", err);
+        res.status(500).json({ error: "Server error"});
+    }
+});
+
 
 //protected route: get user's listings
 router.get('/my-listings', authMiddleware, async (req, res) => {
@@ -24,7 +50,10 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
 
         //filters
         const {category_id, min_price, max_price, search} = req.query;
-        let query = "SELECT * FROM products WHERE user_id = $1";
+        let query = `
+            SELECT id, user_id, category_id, name, description, price, delivery_option, condition, image_url, created_at 
+            FROM products WHERE user_id = $1
+        `;
         let queryParams = [userId];
 
         if (category_id){
