@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/register',
     [
         body('email').isEmail().withMessage('Invalid email format'),
-        body('password').isLength({ min:6 }).withMessage('Password must be at least 6 characters')
+        body('password').isLength({ min:8 }).withMessage('Password must be at least 6 characters')
     ],
     async (req, res) => {
         const errors = validationResult(req);
@@ -21,6 +21,12 @@ router.post('/register',
 
         const { email, password, full_name, address } = req.body;
 
+        //enforce password stength
+        const passwordCheck = passwordStrength.test(password);
+        if(!passwordCheck.strong){
+            return res.status(400).json({ error: "Weak password. Use a mix of upprecase, lowercase, numbers and symbols."});
+        }
+
         try { //check if the user already exists
             const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
             if (userExists.rows.length > 0) {
@@ -28,7 +34,7 @@ router.post('/register',
             }
 
             //hash password
-            const salt = await bcrypt.genSalt(10);
+            const salt = await bcrypt.genSalt(12); // higher salt rounds
             const hashedPassword = await bcrypt.hash(password, salt);
 
             //insert new user
