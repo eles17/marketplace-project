@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } =require('express-validator');
 const pool = require('../config/db');
 require('dotenv').config();
+const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
@@ -51,8 +52,16 @@ router.post('/register',
     }
 );
 
-//User login
-router.post('/login',
+
+// rate limit for login --> maximal 5 requests in 15 min
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: 5, // 5 attempts
+    message: {error: "To many login attempts. Please try again later."}
+});
+
+//User login with rate limiting
+router.post('/login', loginLimiter,
     [
         body('email').isEmail().withMessage('Invalid email format'),
         body('password').exists().withMessage('Password is required')

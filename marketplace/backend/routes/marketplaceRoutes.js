@@ -3,6 +3,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 const multer = require('multer');
 const path = require('path');
+const { validateUserInput } = require('../middleware/validateMiddleware'); 
 
 const router = express.Router();
 
@@ -73,8 +74,10 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
 const upload = multer({ storage });
 
 //protectcted rout: Add a new listing with image upload
-router.post('/add-listing', authMiddleware, upload.single('image'), async (req, res) => {
+router.post('/add-listing', authMiddleware, upload.single('image'), validateUserInput, async (req, res) => {
     const { name, category_id, description, price, delivery_option, condition } = req.body;
+        // check if image was uplaoded
+        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     //ensure prie is a number
     if(isNaN(price) || price <= 0){
@@ -84,8 +87,6 @@ router.post('/add-listing', authMiddleware, upload.single('image'), async (req, 
     if(!name || !category_id || !description || !delivery_option || !condition){
         return res.status(400).json({error: "Missing requierd fields."});
     }
-    // check if image was uplaoded
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     try {
         const newListing = await pool.query(
