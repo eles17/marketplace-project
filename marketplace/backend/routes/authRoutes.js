@@ -29,7 +29,8 @@ router.post('/register',
         }
 
         try { //check if the user already exists
-            const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+            await pool.query("BEGIN"); // start transaction
+            const userExists = await pool.query("SELECT 1 FROM users WHERE email = $1", [email]);
             if (userExists.rows.length > 0) {
                 return next({ statusCode: 400, message: "User already exists" });
             }
@@ -43,9 +44,11 @@ router.post('/register',
                 "INSERT INTO users (email, password_hash, full_name, address) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name",
                 [email, hashedPassword, full_name, address]
             );
+            await pool.query("COMMIT"); // commit transaction
 
             res.status(201).json({ message: "User registered successfully", user: newUser.rows[0] });
         }catch (err) {
+            await pool.query("ROLLBACK"); //rollback in case of error
             next(err);
         }
     }
@@ -74,7 +77,7 @@ router.post('/login', loginLimiter,
         const { email, password } = req.body;
 
         try { //check if the user exists
-            const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+            const user = await pool.query("SELECT id, email, password_hash, is_admin, is_banned FROM users WHERE email = $1", [email]);
             if (user.rows.length === 0) {
                 return next({ statusCode: 400, message: "Invalid email or password" });
             }

@@ -43,7 +43,7 @@ router.get('/recent/:receiver_id', authMiddleware, async(req, res) => {
 
     try{
         const recentMessages = await pool.query(
-            "SELECT * FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id =$1) ORDER BY created_at DESC LIMIT $3",
+            "SELECT id, sender_id, receiver_id, message, created_at FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) ORDER BY created_at DESC LIMIT $3",
             [req.user.id, receiver_id, limit]
         );
         res.json(recentMessages.rows);

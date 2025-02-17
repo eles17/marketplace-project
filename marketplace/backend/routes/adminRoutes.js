@@ -43,7 +43,7 @@ router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res)
 // get all users that are admins --> ADMINS ONLY
 router.get('/users', authMiddleware, adminMiddleware, async(req, res) => {
     try{
-        const users = await pool.query("SELECT id, email, full_name, is_admin, is_banned FROM users");
+        const users = await pool.query("SELECT id, email, full_name, is_admin, is_banned FROM users ORDER BY created_at DESC");
         res.json(users.rows);
     }catch (err){
         next(err);
@@ -55,13 +55,13 @@ router.put('/users/:id/make-admin', authMiddleware, adminMiddleware, async(req,r
     const {id} = req.params;
 
     try{
-        const result = await pool.query("UPDATE users SET is_admin = TRUE WHERE id = $1 RETURNING id, email, is_admin", [id]);
-        
-        if (result.rowCount === 0){
+        const user = await pool.query("SELECT 1 FROM users WHERE id = $1", [id]);
+        if (user.rowCount === 0) {
             return next({ statusCode: 404, message: "User not found." });
         }
 
-        res.json({message: "User promoted to admin.", user: result.rows[0]});
+        const result = await pool.query("UPDATE users SET is_admin = TRUE WHERE id = $1 RETURNING id, email, is_admin", [id]);
+        res.json({ message: "User promoted to admin.", user: result.rows[0] });
     }catch (err){
         next(err);
     }
@@ -88,7 +88,7 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res) =>{
 // GET ALL LISTINGS --> Admins only
 router.get('/listings', authMiddleware, adminMiddleware, async(req, res) => {    
     try{
-    const listings = await pool.query("SELECT * FROM products ORDER BY created_at DESC");
+    const listings = await pool.query("SELECT id, name, price, category_id, created_at FROM products ORDER BY created_at DESC");
     res.json(listings.rows);
 }catch (err){
         next(err);

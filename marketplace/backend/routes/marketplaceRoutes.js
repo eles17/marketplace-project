@@ -50,29 +50,28 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
         //filters
         const {category_id, min_price, max_price, search} = req.query;
         let query = `
-            SELECT id, user_id, category_id, name, description, price, delivery_option, condition, image_url, created_at 
-            FROM products WHERE user_id = $1
+            SELECT id, name, description, price, category_id, image_url, created_at FROM products WHERE user_id = $1
         `;
-        let queryParams = [userId];
+        let queryParams = [req.user.id];
 
-        if (category_id){
-            query += " AND category_id = $" + (queryParams.length + 1);
+        if (category_id) {
+            query += ` AND category_id = $${queryParams.length + 1}`;
             queryParams.push(category_id);
         }
-        if (min_price){
-            query += " AND price >= $" + (queryParams.length + 1);
+        if (min_price) {
+            query += ` AND price >= $${queryParams.length + 1}`;
             queryParams.push(min_price);
         }
-        if (max_price){
-            query += " AND price <= $" + (queryParams.length + 1);
+        if (max_price) {
+            query += ` AND price <= $${queryParams.length + 1}`;
             queryParams.push(max_price);
         }
-        if (search){
-            query += " AND (name ILIKE $" + (queryParams.length + 1) + " OR description ILIKE $" + (queryParams.length + 2) + ")";
-            queryParams.push('%&{search}%' , '%&{search}%');
+        if (search) {
+            query += ` AND (name ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
+            queryParams.push(`%${search}%`, `%${search}%`);
         }
 
-        query += " ORDER BY created_at DESC LIMIT $" + (queryParams.length + 1) + " OFFSET $" + (queryParams.length + 2);
+        query += ` ORDER BY created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
         queryParams.push(limit, offset);
 
         const listings = await pool.query(query, queryParams);
