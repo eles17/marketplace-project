@@ -105,7 +105,8 @@ CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     sender_id INT REFERENCES users(id) ON DELETE CASCADE,
     receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
-    listing_id INT REFERENCES products(id) ON DELETE CASCADE,
+    listing_id INT NOT NULL,
+    listing_type VARCHAR(50) CHECK (listing_type IN ('Product', 'Vehicle', 'RealEstate')),
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
