@@ -1,0 +1,20 @@
+<div class="auth-container">
+    <h2>Register</h2>
+    <form (ngSubmit)="onRegister()">
+      <label>Full Name:</label>
+      <input type="text" [(ngModel)]="registerData.full_name" name="full_name" required />
+  
+      <label>Email:</label>
+      <input type="email" [(ngModel)]="registerData.email" name="email" required />
+  
+      <label>Password:</label>
+      <input type="password" [(ngModel)]="registerData.password" name="password" required />
+  
+      <label>Address:</label>
+      <input type="text" [(ngModel)]="registerData.address" name="address" required />
+  
+      <button type="submit">Register</button>
+    </form>
+  
+    <p>Already have an account? <a routerLink="/login">Login here</a></p>
+  </div>
