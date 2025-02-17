@@ -17,7 +17,7 @@ router.post('/register',
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return next({ statusCode: 400, message: errors.array()[0].msg });
         }
 
         const { email, password, full_name, address } = req.body;
@@ -31,7 +31,7 @@ router.post('/register',
         try { //check if the user already exists
             const userExists = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
             if (userExists.rows.length > 0) {
-                return res.status(400).json({ message: "User already exsits"});
+                return next({ statusCode: 400, message: "User already exists" });
             }
 
             //hash password
@@ -46,8 +46,7 @@ router.post('/register',
 
             res.status(201).json({ message: "User registered successfully", user: newUser.rows[0] });
         }catch (err) {
-            console.error("Registration Error:", err);
-            res.status(500).json({ error: "Server error"});
+            next(err);
         }
     }
 );
@@ -105,7 +104,6 @@ router.post('/login', loginLimiter,
 
             res.json({ message: "Login successful", token });
         }catch (err) {
-            console.error("Login Error:", err);
             next(err); // pass error to global error handler
         }
     }

@@ -13,8 +13,7 @@ router.get('/unread', authMiddleware, async (req, res) => {
         );
         res.json(unreadMessages.rows);
     }catch (err) {
-        console.error("Fetch Unread Messages Error:", err);
-        res.status(500).json({error: "Server error"});
+        next(err);
     }
 });
 
@@ -33,8 +32,7 @@ router.put('/mark-as-read', authMiddleware, async(req,res) => {
         console.log(`Messages marked as read: ${message_ids}`);
         res.json({message: "Messages marked as read."});
     } catch (err) {
-        console.error("Mark As Read Error:", err);
-        res.status(500).json({error: "Server error"});
+        next(err);
     }
 })
 
@@ -50,8 +48,7 @@ router.get('/recent/:receiver_id', authMiddleware, async(req, res) => {
         );
         res.json(recentMessages.rows);
     }catch (err){
-        console.error("Fetch Recent Messages Error:", err);
-        res.status(500).json({error: "Server error"});
+        next(err);
     }
 });
 
@@ -79,8 +76,7 @@ router.post('/send', authMiddleware, async(req, res)=>{
         );
         res.status(201).json({message: "Message sent.", chat: newMessage.rows[0]});
     }catch (err){
-        console.error("Send Message Error:", err);
-        res.status(500).json({error: "Server error"});
+        next(err);
     }
 });
 
@@ -95,8 +91,7 @@ router.get('/conversation/:receiver_id', authMiddleware, async (req, res) =>{
         );
         res.json(chatHistory.rows);
     } catch (err) {
-        console.error("Fetch Conversation Error:", err);
-        res.status(500).json({ error:"Server error"});
+        next(err);
     }
 });
 
@@ -112,8 +107,7 @@ router.get('/listing/:listing_id', authMiddleware, async(req, res) =>{
 
         res.json(listingMessages.rows);
     } catch (err){
-        console.error("Fetch Listing Messages Error:", err);
-        res.status(500).json({ error: "Server error" });
+        next(err);
     }
 });
 

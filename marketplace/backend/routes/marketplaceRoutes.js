@@ -27,8 +27,7 @@ router.get('/categories', async(req,res) => {
         
         res.json(cachedCategories.rows);
     } catch (err){
-        console.error("Fetch Categories Error:", err);
-        res.status(500).json({ error: "Server error"});
+        nextTick(err);
     }
 });
 
@@ -84,8 +83,7 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
         });
 
     } catch (err){
-        console.error("Fetch Listings Error:", err);
-        res.status(500).json({ error: "Server error"});
+        next(err);
     }
 }) ;
 
@@ -126,8 +124,7 @@ router.post('/add-listing', authMiddleware, upload.single('image'), validateUser
 
         res.status(201).json({ message: "Listing created", listing: newListing.rows[0]});
     } catch (err){
-        console.error("Add Listing Error:", err);
-        res.status(500).json({ error: "Server error" });
+        next(err);
     }
 });
 
