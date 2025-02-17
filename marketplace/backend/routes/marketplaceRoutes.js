@@ -2,6 +2,7 @@ const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
 const pool = require('../config/db');
 const multer = require('multer');
+const path = require('path');
 
 const router = express.Router();
 
@@ -61,7 +62,8 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
 // configuer image uploads
  const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'backend/uploads'); // save images in uplaods folder
+        const uploadPath = path.join(__dirname, '../uploads'); // save images to an accessible path
+        cb(null, uploadPath); // save images in uploads folder
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + '-' + file.originalname); // unique filename
@@ -73,6 +75,16 @@ const upload = multer({ storage });
 //protectcted rout: Add a new listing with image upload
 router.post('/add-listing', authMiddleware, upload.single('image'), async (req, res) => {
     const { name, category_id, description, price, delivery_option, condition } = req.body;
+
+    //ensure prie is a number
+    if(isNaN(price) || price <= 0){
+        return res.status(400).json({error: "Invalid price. Must be a positive number."});
+    }
+    //check for missing fields
+    if(!name || !category_id || !description || !delivery_option || !condition){
+        return res.status(400).json({error: "Missing requierd fields."});
+    }
+    // check if image was uplaoded
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     try {
@@ -80,6 +92,7 @@ router.post('/add-listing', authMiddleware, upload.single('image'), async (req, 
             "INSERT INTO products (user_id, category_id, name, description, price, delivery_option, condition, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
             [req.user.id, category_id, name, description, price, delivery_option, condition, imageUrl]
         );
+        console.log(`Listing created with ID: ${newListing.rows[0].id}, Image URL: ${imageUrl}`);
 
         res.status(201).json({ message: "Listing created", listing: newListing.rows[0]});
     } catch (err){
