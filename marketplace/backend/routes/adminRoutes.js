@@ -11,16 +11,16 @@ router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) =
     const { id } = req.params;
 
     try{
-        const result = await pool.query("UPDATE users SET is_banned = TRUE WHERE id = $1", [id]);
+        const result = await pool.query("UPDATE users SET is_banned = TRUE WHERE id = $1 RETURNING id, email, is_banned", [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "User not found." });
         }
-        console.log(`User ID ${id} has been banned.`);
-        res.json({message: "User has been banned.", user: result.rows[0]});
-    } catch (err){
+
+        res.json({ message: "User banned successfully.", user: result.rows[0] });
+    } catch (err) {
         console.error("Ban User Error:", err);
-        res.status(500).json({ error: "Server error"})
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -29,23 +29,23 @@ router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res)
     const { id } = req.params;
 
     try{
-        const result = await pool.query("UPDATE users SET is_banned = FALSE WHERE id = $1", [id]);
+        const result = await pool.query("UPDATE users SET is_banned = FALSE WHERE id = $1 RETURNING id, email, is_banned", [id]);
 
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "User not found." });
         }
-        console.log(`User ID ${id} has been unband.`);
-        res.json({message: "User has been unband.", user: result.rows[0]});
-    } catch (err){
+
+        res.json({ message: "User unbanned successfully.", user: result.rows[0] });
+    } catch (err) {
         console.error("Unban User Error:", err);
-        res.status(500).json({ error: "Server error"})
+        res.status(500).json({ error: "Server error" });
     }
 });
 
 // get all users that are admins --> ADMINS ONLY
 router.get('/users', authMiddleware, adminMiddleware, async(req, res) => {
     try{
-        const users = await pool.query("SELECT id, email, full_name, is_admin, created_at FROM users");
+        const users = await pool.query("SELECT id, email, full_name, is_admin, is_banned FROM users");
         res.json(users.rows);
     }catch (err){
         console.error("Fetch Users Error:", err);
@@ -58,10 +58,15 @@ router.put('/users/:id/make-admin', authMiddleware, adminMiddleware, async(req,r
     const {id} = req.params;
 
     try{
-        await pool.query("UPDATE users SET is_admin = TRUE WHERE id= $1", [id]);
-        res.json({message: "User promoted to admin."});
+        const result = await pool.query("UPDATE users SET is_admin = TRUE WHERE id = $1 RETURNING id, email, is_admin", [id]);
+        
+        if (result.rowCount === 0){
+            return res.status(404).json({message: "User not found."});
+        }
+
+        res.json({message: "User promoted to admin.", user: result.rows[0]});
     }catch (err){
-        console.error("Update User Role Error:", err);
+        console.error("Make admin Error:", err);
         res.status(500).json({ error:"Server error"});
     }
 });
@@ -96,11 +101,16 @@ router.delete('/listings/:id', authMiddleware, adminMiddleware, async(req,res) =
     const {id} = req.params;
 
     try{
-        await pool.query("DELETE FROM products WHERE id = $1", [id]);
-        res.json({message: "Listing deleted."});
-    }catch (err){
+        const result = await pool.query("DELETE FROM products WHERE id = $1 RETURNING id", [id]);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Listing not found." });
+        }
+
+        res.json({ message: "Listing deleted successfully." });
+    } catch (err) {
         console.error("Delete Listing Error:", err);
-        res.status(500).json({ error:"Server error"});
+        res.status(500).json({ error: "Server error" });
     }
 });
 
