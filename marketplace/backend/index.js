@@ -18,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(compression()); // enable GZIP compression
-app.use(errorHandler); 
+app.use(errorHandler); // apply global error handling middleware
 
 const apiLimiter = rateLimit({
     windowMS: 15 * 60 * 1000,
