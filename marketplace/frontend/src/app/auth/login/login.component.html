@@ -1,1 +1,24 @@
-<p>login works!</p>
+<div class="login-container">
+    <h2>Login</h2>
+
+    <form (ngSubmit)="onLogin()">
+        <div class="input-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" [(ngModel)]="loginData.email" name="email" required />
+        </div>
+
+        <div class="input-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" [(ngModel)]="loginData.password" name="password" required />
+        </div>
+
+        <button type="submit">Login</button>
+
+        <p *ngIf ="errorMessage" class = "error" >{{ errorMessage }}</p>
+
+        <p>
+            Don't have an accoutn? <a routerLink = "/auth/register">Register here</a>
+        </p>
+
+    </form>
+</div>
