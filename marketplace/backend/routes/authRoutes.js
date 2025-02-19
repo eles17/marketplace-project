@@ -129,4 +129,30 @@ router.post('/login', loginLimiter,
     }
 );
 
+// Fetch user profile
+router.get('/profile', async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await pool.query(
+            "SELECT id, email, full_name, address FROM users WHERE id = $1",
+            [decoded.id]
+        );
+
+        if (user.rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json({ user: user.rows[0] });
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

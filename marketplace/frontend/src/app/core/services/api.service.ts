@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -22,6 +22,11 @@ import { Observable } from 'rxjs';
 
   // Fetch user profile (to be used later)
   getUserProfile(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/auth/profile`);
-  }
+    const token = localStorage.getItem('token'); // Retrieve token from storage
+    const headers = new HttpHeaders({
+        'Authorization': `Bearer ${token}` // Attach token to headers
+    });
+
+    return this.http.get(`${this.apiUrl}/auth/profile`, { headers });
+}
 }
