@@ -1,68 +1,80 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { body, validationResult } =require('express-validator');
+const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 require('dotenv').config();
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
-//user registration
+// Import password validator
+const passwordValidator = require('password-validator');
+
+// Define password strength rules
+const passwordStrength = new passwordValidator();
+passwordStrength
+    .is().min(8)   // Minimum length 8
+    .is().max(100) // Maximum length 100
+    .has().uppercase() // Must have uppercase letters
+    .has().lowercase() // Must have lowercase letters
+    .has().digits(1)  // Must have at least one digit
+    .has().not().spaces(); // Should not have spaces
+
+// User Registration
 router.post('/register',
     [
         body('email').isEmail().withMessage('Invalid email format'),
-        body('password').isLength({ min:8 }).withMessage('Password must be at least 6 characters')
+        body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
     ],
-    async (req, res) => {
+    async (req, res, next) => {  // Added `next` here to fix missing parameter
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return next({ statusCode: 400, message: errors.array()[0].msg });
+            return res.status(400).json({ errors: errors.array() });
         }
 
         const { email, password, full_name, address } = req.body;
 
-        //enforce password stength
-        const passwordCheck = passwordStrength.test(password);
-        if(!passwordCheck.strong){
-            return res.status(400).json({ error: "Weak password. Use a mix of upprecase, lowercase, numbers and symbols."});
+        // Validate password strength
+        const passwordCheck = passwordStrength.validate(password);
+        if (!passwordCheck) {
+            return res.status(400).json({ error: "Weak password. Use a mix of uppercase, lowercase, numbers, and symbols." });
         }
 
-        try { //check if the user already exists
-            await pool.query("BEGIN"); // start transaction
+        try {
+            await pool.query("BEGIN"); // Start transaction
             const userExists = await pool.query("SELECT 1 FROM users WHERE email = $1", [email]);
             if (userExists.rows.length > 0) {
-                return next({ statusCode: 400, message: "User already exists" });
+                return res.status(400).json({ error: "User already exists" });
             }
 
-            //hash password
-            const salt = await bcrypt.genSalt(12); // higher salt rounds
+            // Hash password
+            const salt = await bcrypt.genSalt(12);
             const hashedPassword = await bcrypt.hash(password, salt);
 
-            //insert new user
+            // Insert new user
             const newUser = await pool.query(
                 "INSERT INTO users (email, password_hash, full_name, address) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name",
                 [email, hashedPassword, full_name, address]
             );
-            await pool.query("COMMIT"); // commit transaction
+            await pool.query("COMMIT"); // Commit transaction
 
             res.status(201).json({ message: "User registered successfully", user: newUser.rows[0] });
-        }catch (err) {
-            await pool.query("ROLLBACK"); //rollback in case of error
+        } catch (err) {
+            await pool.query("ROLLBACK"); // Rollback on error
             next(err);
         }
     }
 );
 
-
-// rate limit for login --> maximal 5 requests in 15 min
+// Rate Limit for Login (5 attempts per 15 min)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
     max: 5, // 5 attempts
-    message: {error: "To many login attempts. Please try again later."}
+    message: { error: "Too many login attempts. Please try again later." }
 });
 
-//User login with rate limiting
+// User Login
 router.post('/login', loginLimiter,
     [
         body('email').isEmail().withMessage('Invalid email format'),
@@ -71,44 +83,50 @@ router.post('/login', loginLimiter,
     async (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return next({ statusCode: 400, message: errors.array()[0].msg });
+            return res.status(400).json({ errors: errors.array() });
         }
 
         const { email, password } = req.body;
 
-        try { //check if the user exists
+        try {
             const user = await pool.query("SELECT id, email, password_hash, is_admin, is_banned FROM users WHERE email = $1", [email]);
             if (user.rows.length === 0) {
-                return next({ statusCode: 400, message: "Invalid email or password" });
+                return res.status(400).json({ error: "Invalid email or password" });
             }
 
-            //check if user is banned
-            if (user.rows[0].is_banned){
-                return next({ statusCode: 400, message: "Your account has been banned. Contact support for assistance." });
+            // Check if user is banned
+            if (user.rows[0].is_banned) {
+                return res.status(403).json({ error: "Your account has been banned. Contact support for assistance." });
             }
 
-            //compare passwords
+            // Compare passwords
             const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
-            if (!validPassword){
-                return next({ statusCode: 400, message: "Invalid email or password" });
+            
+            console.log("Entered Password:", password);
+            console.log("Stored Hash:", user.rows[0].password_hash);
+            console.log("Password Match:", validPassword);
+
+            if (!validPassword) {
+                return res.status(400).json({ error: "Invalid email or password" });
             }
 
-            //generate JWT token
+            // Generate JWT token
             const token = jwt.sign(
                 { 
                     id: user.rows[0].id,
                     email: user.rows[0].email,
                     is_admin: user.rows[0].is_admin,
                     is_banned: user.rows[0].is_banned
-                 },
+                },
                 process.env.JWT_SECRET,
-                { expiresIn: "1h"}
+                { expiresIn: "1h" }
             );
 
             res.json({ message: "Login successful", token });
-        }catch (err) {
-            next(err); // pass error to global error handler
+        } catch (err) {
+            next(err);
         }
     }
 );
-module.exports = router; 
+
+module.exports = router;
