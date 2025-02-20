@@ -9,9 +9,14 @@
   <label>Price:</label>
   <input type="number" [(ngModel)]="listing.price" name="price" required>
 
-  <label>Category:</label>
-<select [(ngModel)]="listing.category" name="category" required>
+  <label>Main Category:</label>
+<select [(ngModel)]="selectedMainCategory" name="mainCategory" (change)="updateSubcategories()" required>
   <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+</select>
+
+<label>Subcategory:</label>
+<select [(ngModel)]="listing.category" name="subcategory" required>
+  <option *ngFor="let sub of subcategories" [value]="sub.id">{{ sub.name }}</option>
 </select>
 
   <label>Upload Image:</label>

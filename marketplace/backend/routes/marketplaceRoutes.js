@@ -41,24 +41,33 @@ const router = express.Router();
     }
 });
 
-router.get('/categories', async(req,res) => {
-    try{
-        //check cache first
-        const cachedCategories = cache.get("categories");
-        if(cachedCategories){
-            console.log("Serving catagories from cache");
-            return res.json(cachedCategories);
-        }
+router.get('/categories', async (req, res) => {
+    try {
+        // Fetch categories from DB
+        const categoriesResult = await pool.query("SELECT * FROM categories");
 
-        //fetch from DB if not cached
-        console.log("Fetching categories from database...");
-        const catagories = await pool.query("SELECT * FROM categories");
+        // Separate main categories
+        const mainCategories = [
+            { id: 1, name: "Vehicles", subcategories: [] },
+            { id: 2, name: "Real Estate", subcategories: [] },
+            { id: 3, name: "Retail", subcategories: [] }
+        ];
 
-        cache.set("categories", catagories.rows); //store in cache
-        
-        res.json(cachedCategories.rows);
-    } catch (err){
-        nextTick(err);
+        // Map categories into correct subcategories
+        categoriesResult.rows.forEach(category => {
+            if (["Cars", "Motorcycles"].includes(category.name)) {
+                mainCategories[0].subcategories.push({ id: category.id, name: category.name }); // Vehicles
+            } else if (["Apartments", "Houses"].includes(category.name)) {
+                mainCategories[1].subcategories.push({ id: category.id, name: category.name }); // Real Estate
+            } else {
+                mainCategories[2].subcategories.push({ id: category.id, name: category.name }); // Retail
+            }
+        });
+
+        res.json(mainCategories);
+    } catch (err) {
+        console.error("Error fetching categories:", err);
+        res.status(500).json({ error: "Failed to fetch categories" });
     }
 });
 

@@ -17,7 +17,9 @@ export class AddListingComponent implements OnInit {
     category: null as number | null, // Ensure category is treated as a number
   };
   
-  categories: { id: number; name: string }[] = []; // Correctly define categories
+  categories: { id: number; name: string; subcategories: { id: number; name: string }[] }[] = [];
+  subcategories: { id: number; name: string }[] = [];
+  selectedMainCategory: number | null = null;
   selectedFile: File | null = null;
   errorMessage: string = ''; // Store any errors
 
@@ -28,19 +30,36 @@ export class AddListingComponent implements OnInit {
   }
 
   loadCategories(): void {
-    this.http.get<{ id: number; name: string }[]>(`${environment.apiUrl}/marketplace/categories`).subscribe(
+    this.http.get<{ id: number; name: string; subcategories: { id: number; name: string }[] }[]>(
+      `${environment.apiUrl}/marketplace/categories`
+    ).subscribe(
       (data) => {
-        if (data && data.length > 0) {
-          this.categories = data; // Assign data only if it's valid
-        } else {
-          this.errorMessage = "No categories found.";
-        }
+        this.categories = data.filter(cat => cat.subcategories && cat.subcategories.length > 0); // Ensure only main categories are shown
       },
       (error) => {
         console.error('Error fetching categories:', error);
         this.errorMessage = "Failed to load categories.";
       }
     );
+  }
+
+  updateSubcategories(): void {
+    console.log("Selected Main Category ID:", this.selectedMainCategory);
+  
+    if (this.selectedMainCategory) {
+      const selectedCategory = this.categories.find(cat => cat.id === Number(this.selectedMainCategory));
+  
+      if (selectedCategory?.subcategories?.length) {
+        this.subcategories = selectedCategory.subcategories;
+        console.log("Loaded Subcategories:", this.subcategories);
+      } else {
+        this.subcategories = [];
+        console.log("No subcategories found.");
+      }
+    } else {
+      this.subcategories = [];
+      console.log("Main category not selected.");
+    }
   }
 
   onFileSelected(event: any): void {
@@ -56,18 +75,16 @@ export class AddListingComponent implements OnInit {
   }
 
   createListing(): void {
-    // Validate all required fields
     if (!this.listing.title || !this.listing.description || !this.listing.price || !this.listing.category) {
       alert('All fields are required');
       return;
     }
 
-    // Ensure price is converted correctly
     const formData = new FormData();
     formData.append('title', this.listing.title);
     formData.append('description', this.listing.description);
-    formData.append('price', this.listing.price?.toString() || '0'); // Prevent null price error
-    formData.append('category', this.listing.category?.toString() || ''); // Ensure category is sent correctly
+    formData.append('price', this.listing.price?.toString() || '0');
+    formData.append('category', this.listing.category?.toString() || '');
 
     if (this.selectedFile) {
       formData.append('image', this.selectedFile);
@@ -76,12 +93,20 @@ export class AddListingComponent implements OnInit {
     this.listingsService.createListing(formData).subscribe(
       (response) => {
         console.log('Listing created successfully:', response);
-        alert("Listing successfully created!"); // User feedback
+        alert("Listing successfully created!");
+        this.resetForm();
       },
       (error) => {
         console.error('Error creating listing:', error);
         alert("Error creating listing.");
       }
     );
+  }
+
+  resetForm(): void {
+    this.listing = { title: '', description: '', price: null, category: null };
+    this.selectedFile = null;
+    this.selectedMainCategory = null;
+    this.subcategories = [];
   }
 }
