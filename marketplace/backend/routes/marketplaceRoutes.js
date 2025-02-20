@@ -45,6 +45,24 @@ router.get('/listings', async (req, res) => {
     }
 });
 
+router.get('/listings/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        "SELECT id, title, description, price, category, created_at, user_id FROM listings WHERE id = $1",
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Listing not found" });
+      }
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error fetching listing:", error);
+      res.status(500).json({ error: "Server error fetching listing" });
+    }
+  });
+
+
 // Protected route: Get user's listings
 router.get('/my-listings', authMiddleware, async (req, res) => {
     try {
