@@ -21,4 +21,8 @@ getListings(): Observable<any[]> {
 getListingById(id: number): Observable<any> {
   return this.http.get<any>(`${this.apiUrl}/listings/${id}`);
 }
+
+createListing(formData: FormData): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/listings`, formData);
+}
 }

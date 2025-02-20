@@ -12,6 +12,7 @@ import { RegisterComponent } from './components/auth/register/register.component
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ListingsComponent } from './components/listings/listings.component';
 import { ListingDetailsComponent } from './components/listings/listing-details/listing-details.component';
+import { AddListingComponent } from './components/listings/add-listing/add-listing.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { ListingDetailsComponent } from './components/listings/listing-details/l
     RegisterComponent,
     DashboardComponent,
     ListingsComponent,
-    ListingDetailsComponent
+    ListingDetailsComponent,
+    AddListingComponent
   ],
   imports: [
     BrowserModule,
