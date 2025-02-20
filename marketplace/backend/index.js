@@ -15,6 +15,7 @@ const rateLimit = require("express-rate-limit");
 const errorHandler = require("./middleware/errorHandler");
 
 
+
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -141,6 +142,8 @@ app.get('/api/protected', authMiddleware, (req, res) => {
     })
 });
 
+
+app.use('/api/marketplace', marketplaceRoutes);
 
 app.use('/api/chat', chatRoutes);
 

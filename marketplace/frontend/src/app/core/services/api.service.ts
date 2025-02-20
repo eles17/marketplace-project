@@ -27,6 +27,8 @@ import { Observable } from 'rxjs';
         'Authorization': `Bearer ${token}` // Attach token to headers
     });
 
+  
     return this.http.get(`${this.apiUrl}/auth/profile`, { headers }); 
 }
 }
+

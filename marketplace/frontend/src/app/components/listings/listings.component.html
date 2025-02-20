@@ -1,2 +1,13 @@
 <h1>Listings</h1>
-<p>Here will be all avaliable listings!</p>
+
+<div *ngIf="listings.length === 0">
+  <p>No listings available.</p>
+</div>
+
+<ul>
+  <li *ngFor="let listing of listings">
+    <h3>{{ listing.title }}</h3>
+    <p>{{ listing.description }}</p>
+    <strong>Price: {{ listing.price }} €</strong>
+  </li>
+</ul>

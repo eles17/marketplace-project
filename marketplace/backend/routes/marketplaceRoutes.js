@@ -30,7 +30,20 @@ router.get('/categories', async(req,res) => {
         nextTick(err);
     }
 });
-
+// Get all listings (Public route for browsing)
+router.get('/listings', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, name AS title, description, price, condition, image_url, created_at 
+             FROM products 
+             ORDER BY created_at DESC`
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error fetching listings:", error);
+        res.status(500).json({ error: "Server error fetching listings" });
+    }
+});
 
 //protected route: get user's listings
 router.get('/my-listings', authMiddleware, async (req, res) => {
