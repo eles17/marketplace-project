@@ -1,21 +1,21 @@
 <h2>Add New Listing</h2>
-<form (submit)="onSubmit()">
+<form (ngSubmit)="createListing()">
   <label>Title:</label>
-  <input type="text" [(ngModel)]="listing.title" required>
+  <input type="text" [(ngModel)]="listing.title" name="title" required>
 
   <label>Description:</label>
-  <textarea [(ngModel)]="listing.description" required></textarea>
+  <textarea [(ngModel)]="listing.description" name="description" required></textarea>
 
   <label>Price:</label>
-  <input type="number" [(ngModel)]="listing.price" required>
+  <input type="number" [(ngModel)]="listing.price" name="price" required>
 
   <label>Category:</label>
-  <select [(ngModel)]="listing.category" required>
-    <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-  </select>
+<select [(ngModel)]="listing.category" name="category" required>
+  <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+</select>
 
   <label>Upload Image:</label>
-  <input type="file" (change)="onFileSelected($event)">
+  <input type="file" (change)="onFileSelected($event)" required>
 
   <button type="submit">Create Listing</button>
 </form>

@@ -12,8 +12,8 @@ const routes: Routes = [
   { path: 'auth/register', component: RegisterComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'listings', component: ListingsComponent},
+  { path: 'listings/add-listing', component: AddListingComponent},
   { path: 'listings/:id', component: ListingDetailsComponent },
-  { path: 'listings/new', component: AddListingComponent },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' }, // redirects to login
   { path: '**', redirectTo: '/auth/login' }  // Handles unknown routes
 ];

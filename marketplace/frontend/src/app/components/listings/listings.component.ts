@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../core/services/listings.service';
 import { Observable } from 'rxjs';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -12,7 +13,7 @@ import { Observable } from 'rxjs';
 export class ListingsComponent implements OnInit {
   listings: any[] = []; // Store listings data
 
-  constructor(private listingsService: ListingsService) {} // Ensure correct service
+  constructor(private listingsService: ListingsService, private router: Router) {} // Ensure correct service
 
   ngOnInit(): void {
     this.fetchListings(); // Call the function to load listings
@@ -27,5 +28,8 @@ export class ListingsComponent implements OnInit {
         console.error('Error fetching listings:', err);
       }
     });
+  }
+  goToAddListing() {
+    this.router.navigate(['/listings/add-listing']);
   }
 }
