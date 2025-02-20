@@ -1,0 +1,12 @@
+<div *ngIf="listing; else loading">
+  <h2>{{ listing.title }}</h2>
+  <p><strong>Category:</strong> {{ listing.category }}</p>
+  <p><strong>Price:</strong> ${{ listing.price }}</p>
+  <p><strong>Description:</strong> {{ listing.description }}</p>
+  <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
+  <button routerLink="/listings">Back to Listings</button>
+</div>
+
+<ng-template #loading>
+  <p>Loading listing details...</p>
+</ng-template>
