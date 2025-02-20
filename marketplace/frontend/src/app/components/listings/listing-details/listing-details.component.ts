@@ -10,6 +10,7 @@ import { ListingsService } from '../../../core/services/listings.service';
 })
 export class ListingDetailsComponent implements OnInit {
   listing: any;
+  listingId: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -17,15 +18,19 @@ export class ListingDetailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id'); // Get ID from URL
-    if (id) {
-      this.listingsService.getListingById(+id).subscribe(
-        (data) => {
-          this.listing = data;
-        },
-        (error) => {
-          console.error("Error fetching listing details:", error);
-        }
+    this.listingId = Number(this.route.snapshot.paramMap.get('id')); // Convert ID to number
+    if (!this.listingId) {
+      console.error("Invalid listing ID");
+      return;
+    }
+    this.fetchListingDetails();
+  }
+
+  fetchListingDetails(): void {
+    if (this.listingId) {
+      this.listingsService.getListingById(this.listingId).subscribe(
+        (data) => this.listing = data,
+        (error) => console.error("Error fetching listing details:", error)
       );
     }
   }

@@ -23,6 +23,6 @@ getListingById(id: number): Observable<any> {
 }
 
 createListing(formData: FormData): Observable<any> {
-  return this.http.post<any>(`${this.apiUrl}/listings`, formData);
+  return this.http.post<any>(`${this.apiUrl}/add-listings`, formData);
 }
 }

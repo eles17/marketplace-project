@@ -1,14 +1,45 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
 const pool = require('../config/db');
-const multer = require('multer');
-const path = require('path');
+const multer = require('multer'); 
+const path = require('path'); 
 const { validateUserInput } = require('../middleware/validateMiddleware'); 
 const NodeCache = require('node-cache');
+
+
+// configuer image uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = path.join(__dirname, '../uploads'); // save images to an accessible path
+        cb(null, uploadPath); // save images in uploads folder
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname); // unique filename
+    }
+ });
+
+
+ const upload = multer({ storage });
+
 
 const cache = new NodeCache({ stdTTL:600}); //cache data for 10 min
 
 const router = express.Router();
+
+ // Fetch all listings
+ router.get('/listings', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, title, description, price, category, created_at, user_id, image_url 
+             FROM listings 
+             ORDER BY created_at DESC`
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error fetching listings:", error);
+        res.status(500).json({ error: "Server error fetching listings" });
+    }
+});
 
 router.get('/categories', async(req,res) => {
     try{
@@ -30,20 +61,27 @@ router.get('/categories', async(req,res) => {
         nextTick(err);
     }
 });
+
+
 // fetch all products (listings)
-router.get('/listings', async (req, res) => {
+router.post('/listings', authMiddleware, upload.single('image'), async (req, res) => {
+    const { title, description, price, category } = req.body;
+    const userId = req.user.id;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  
     try {
-        const result = await pool.query(
-            `SELECT id, title, description, price, category, created_at, user_id 
-             FROM listings 
-             ORDER BY created_at DESC`
-        );
-        res.json(result.rows);
-    } catch (error) {
-        console.error("Error fetching listings:", error);
-        res.status(500).json({ error: "Server error fetching listings" });
+      const newListing = await pool.query(
+        `INSERT INTO listings (title, description, price, category, user_id, image_url) 
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [title, description, price, category, userId, imageUrl]
+      );
+  
+      res.status(201).json({ message: "Listing created", listing: newListing.rows[0] });
+    } catch (err) {
+      console.error("Error adding listing:", err);
+      res.status(500).json({ error: "Server error adding listing" });
     }
-});
+  });
 
 router.get('/listings/:id', async (req, res) => {
     const { id } = req.params;
@@ -121,18 +159,7 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
     }
 });
 
-// configuer image uploads
- const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../uploads'); // save images to an accessible path
-        cb(null, uploadPath); // save images in uploads folder
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname); // unique filename
-    }
- });
 
-const upload = multer({ storage });
 
 // Protected route: Add a new listing with image upload
 router.post('/add-listing', authMiddleware, upload.single('image'), validateUserInput, async (req, res) => {
