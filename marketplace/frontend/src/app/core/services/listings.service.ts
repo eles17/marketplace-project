@@ -10,8 +10,13 @@ export class ListingsService {
 
   constructor(private http: HttpClient) {}
 
-  // Fetch all listings (Public listings page)
-  getListings(): Observable<any> {
-  return this.http.get(`${this.apiUrl}/marketplace/listings`);
+// Fetch all listings
+getListings(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/marketplace/listings`);
+}
+
+// Fetch a single listing by ID
+getListingById(id: number): Observable<any> {
+  return this.http.get<any>(`${this.apiUrl}/marketplace/listings/${id}`);
 }
 }

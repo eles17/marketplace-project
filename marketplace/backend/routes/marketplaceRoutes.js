@@ -23,19 +23,19 @@ router.get('/categories', async(req,res) => {
         console.log("Fetching categories from database...");
         const catagories = await pool.query("SELECT * FROM categories");
 
-        cache.set("categories", cachedCategories.rows); //store in cache
+        cache.set("categories", catagories.rows); //store in cache
         
         res.json(cachedCategories.rows);
     } catch (err){
         nextTick(err);
     }
 });
-// Get all listings (Public route for browsing)
+// fetch all products (listings)
 router.get('/listings', async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT id, name AS title, description, price, condition, image_url, created_at 
-             FROM products 
+            `SELECT id, title, description, price, category, created_at, user_id 
+             FROM listings 
              ORDER BY created_at DESC`
         );
         res.json(result.rows);
@@ -45,31 +45,33 @@ router.get('/listings', async (req, res) => {
     }
 });
 
-//protected route: get user's listings
+// Protected route: Get user's listings
 router.get('/my-listings', authMiddleware, async (req, res) => {
     try {
-        console.log("User Data from Token:", req.user); //debuging log
+        console.log("User Data from Token:", req.user); // Debugging log
 
         const userId = req.user.id;
         if (!userId){
             return res.status(401).json({ message: "Unauthorized: No user ID found in token." });
         }
 
-        //pagnation
-        const page = parseInt(req.query.page) || 1; //default to page 1
-        const limit = parseInt(req.query.limit) || 10; // default limit is 10 items per page
-        const offset = (page - 1) * limit; // calculate offset for pagination
+        // Pagination
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit is 10 items per page
+        const offset = (page - 1) * limit; // Calculate offset for pagination
 
-        //filters
-        const {category_id, min_price, max_price, search} = req.query;
+        // Filters
+        const { category, min_price, max_price, search } = req.query;
         let query = `
-            SELECT id, name, description, price, category_id, image_url, created_at FROM products WHERE user_id = $1
+            SELECT id, title, description, price, category, created_at 
+            FROM listings 
+            WHERE user_id = $1
         `;
-        let queryParams = [req.user.id];
+        let queryParams = [userId];
 
-        if (category_id) {
-            query += ` AND category_id = $${queryParams.length + 1}`;
-            queryParams.push(category_id);
+        if (category) {
+            query += ` AND category = $${queryParams.length + 1}`;
+            queryParams.push(category);
         }
         if (min_price) {
             query += ` AND price >= $${queryParams.length + 1}`;
@@ -80,7 +82,7 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
             queryParams.push(max_price);
         }
         if (search) {
-            query += ` AND (name ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
+            query += ` AND (title ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
             queryParams.push(`%${search}%`, `%${search}%`);
         }
 
@@ -89,7 +91,9 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
 
         const listings = await pool.query(query, queryParams);
         
-        res.json({page, limit, 
+        res.json({
+            page,
+            limit, 
             total: listings.rowCount,
             listings: listings.rows
         });
@@ -97,7 +101,7 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
     } catch (err){
         next(err);
     }
-}) ;
+});
 
 // configuer image uploads
  const storage = multer.diskStorage({
@@ -112,25 +116,28 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
 
 const upload = multer({ storage });
 
-//protectcted rout: Add a new listing with image upload
+// Protected route: Add a new listing with image upload
 router.post('/add-listing', authMiddleware, upload.single('image'), validateUserInput, async (req, res) => {
-    const { name, category_id, description, price, delivery_option, condition } = req.body;
-        // check if image was uplaoded
-        const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const { title, category, description, price } = req.body;
+    
+    // Check if image was uploaded
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    //ensure prie is a number
-    if(isNaN(price) || price <= 0){
-        return res.status(400).json({error: "Invalid price. Must be a positive number."});
+    // Ensure price is a valid number
+    if (isNaN(price) || price <= 0){
+        return res.status(400).json({ error: "Invalid price. Must be a positive number." });
     }
-    //check for missing fields
-    if(!name || !category_id || !description || !delivery_option || !condition){
-        return res.status(400).json({error: "Missing requierd fields."});
+
+    // Check for missing fields
+    if (!title || !category || !description){
+        return res.status(400).json({ error: "Missing required fields." });
     }
 
     try {
         const newListing = await pool.query(
-            "INSERT INTO products (user_id, category_id, name, description, price, delivery_option, condition, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-            [req.user.id, category_id, name, description, price, delivery_option, condition, imageUrl]
+           `INSERT INTO listings (title, description, price, category, user_id, image_url) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [title, description, price, category, req.user.id, imageUrl]
         );
         console.log(`Listing created with ID: ${newListing.rows[0].id}, Image URL: ${imageUrl}`);
 
