@@ -133,11 +133,33 @@ router.post('/listings', authMiddleware, upload.single('image'), async (req, res
     }
 });
 
+router.get('/listings/:id', async (req, res) => {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM listings WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Listing not found" });
+    }
+    res.json(result.rows[0]);
+});
+
+
+// Update a listing
 // Update a listing
 router.patch('/listings/:id', authMiddleware, async (req, res) => {
     const { title, description, price, category, subcategory } = req.body;
     const listingId = req.params.id;
     const userId = req.user.id;
+
+    console.log('Incoming Update Request Data:', req.body); // Log the data
+
+    // Ensure category and subcategory are valid integers
+    const categoryId = parseInt(category, 10);
+    const subcategoryId = subcategory ? parseInt(subcategory, 10) : null;
+
+    // Validate price and category
+    if (isNaN(categoryId) || isNaN(price)) {
+        return res.status(400).json({ error: "Invalid category, price, or subcategory value." });
+    }
 
     try {
         const existingListing = await pool.query(
@@ -152,7 +174,7 @@ router.patch('/listings/:id', authMiddleware, async (req, res) => {
         const updatedListing = await pool.query(
             `UPDATE listings SET title = $1, description = $2, price = $3, category = $4, subcategory = $5 
              WHERE id = $6 AND user_id = $7 RETURNING *`,
-            [title, description, parseFloat(price), parseInt(category), parseInt(subcategory), listingId, userId]
+            [title, description, parseFloat(price), categoryId, subcategoryId, listingId, userId]
         );
 
         res.json({ message: "Listing updated successfully", listing: updatedListing.rows[0] });
@@ -184,5 +206,7 @@ router.delete('/listings/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Server error deleting listing" });
     }
 });
+
+
 
 module.exports = router;
