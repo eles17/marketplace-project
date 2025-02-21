@@ -14,6 +14,7 @@ import { ListingsComponent } from './components/listings/listings.component';
 import { ListingDetailsComponent } from './components/listings/listing-details/listing-details.component';
 import { AddListingComponent } from './components/listings/add-listing/add-listing.component';
 import { EditListingComponent } from './components/listings/edit-listing/edit-listing.component';
+import { AdminPanelComponent } from './admin/admin-panel/admin-panel.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { EditListingComponent } from './components/listings/edit-listing/edit-li
     ListingsComponent,
     ListingDetailsComponent,
     AddListingComponent,
-    EditListingComponent
+    EditListingComponent,
+    AdminPanelComponent
   ],
   imports: [
     BrowserModule,

@@ -16,7 +16,7 @@ import { AdminPanelComponent } from './admin/admin-panel/admin-panel.component';
 const routes: Routes = [
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/register', component: RegisterComponent },
-  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] },
+  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] }, 
   { path: 'dashboard', component: DashboardComponent },
   { path: 'listings', component: ListingsComponent},
   { path: 'listings/add-listing', component: AddListingComponent},

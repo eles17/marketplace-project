@@ -11,8 +11,11 @@ import {jwtDecode} from 'jwt-decode'; // Ensure you install: npm install jwt-dec
 export class AuthService {
   private tokenKey = 'token';
   private userKey = 'user';
+  private user: any;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    this.user = JSON.parse(localStorage.getItem('user') || '{}');
+  }
 
   login(credentials: { email: string; password: string }): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/auth/login`, credentials).pipe(
@@ -51,5 +54,15 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     this.router.navigate(['/login']);
+  }
+
+  // Check if the user is logged in
+  isLoggedIn(): boolean {
+    return !!this.user; // Return true if there's a user object
+  }
+
+  // Check if the user is an admin (based on your user role)
+  isAdmin(): boolean {
+    return this.user?.role === 'admin'; // Assuming role is 'admin'
   }
 }
