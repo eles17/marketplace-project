@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../core/services/listings.service';
-import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-
 
 @Component({
   selector: 'app-listings', 
@@ -12,25 +10,54 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrl: './listings.component.scss'
 })
 export class ListingsComponent implements OnInit {
-  listings: any[] = []; // Store listings data
-  userId: number | null = null; // Store logged-in user ID
+  listings: any[] = [];
+  categories: any[] = [];
+  userId: number | null = null;
 
-  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {} // Ensure correct service
+  selectedMainCategory: string = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  searchQuery: string = '';
+  sortOption: string = 'newest';
+
+  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.userId = this.authService.getUserId(); // Get logged-in user ID
+    this.userId = this.authService.getUserId();
+    this.loadCategories();
     this.fetchListings();
   }
 
-  fetchListings(): void {
-    this.listingsService.getListings().subscribe({
-      next: (data: any[]) => { 
-        this.listings = data;
+  loadCategories(): void {
+    this.listingsService.getCategories().subscribe({
+      next: (data: any[]) => { // Explicitly define type
+        this.categories = data;
       },
-      error: (err: any) => {  
-        console.error('Error fetching listings:', err);
+      error: (err: any) => {  // Explicitly define type
+        console.error("Error fetching categories:", err);
       }
     });
+  }
+  
+  fetchListings(): void {
+    this.listingsService.getListings({
+      category: this.selectedMainCategory,
+      min_price: this.minPrice,
+      max_price: this.maxPrice,
+      search: this.searchQuery,
+      sort: this.sortOption
+    }).subscribe({
+      next: (data: any[]) => { // Explicitly define type
+        this.listings = data;
+      },
+      error: (err: any) => { // Explicitly define type
+        console.error("Error fetching listings:", err);
+      }
+    });
+  }
+
+  applyFilters(): void {
+    this.fetchListings();
   }
 
   goToAddListing() {
@@ -38,7 +65,7 @@ export class ListingsComponent implements OnInit {
   }
 
   editListing(id: number): void {
-    this.router.navigate([`/edit-listing/${id}`]); // Navigate to edit page
+    this.router.navigate([`/edit-listing/${id}`]);
   }
 
   deleteListing(id: number): void {

@@ -1,13 +1,38 @@
+<h2>Listings</h2>
+
+<!-- Filters Section -->
+<div class="filters">
+  <label>Main Category:</label>
+  <select [(ngModel)]="selectedMainCategory" (change)="applyFilters()">
+    <option value="">All</option>
+    <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+  </select>
+
+  <label>Price Range:</label>
+  <input type="number" [(ngModel)]="minPrice" placeholder="Min Price">
+  <input type="number" [(ngModel)]="maxPrice" placeholder="Max Price">
+
+  <label>Search:</label>
+  <input type="text" [(ngModel)]="searchQuery" placeholder="Search Listings">
+
+  <label>Sort By:</label>
+  <select [(ngModel)]="sortOption" (change)="applyFilters()">
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+    <option value="lowPrice">Price: Low to High</option>
+    <option value="highPrice">Price: High to Low</option>
+  </select>
+</div>
+
+<!-- Listings Display -->
 <div *ngIf="listings.length > 0; else noListings">
   <div *ngFor="let listing of listings">
-    <h3>
-      <a [routerLink]="['/listings', listing.id]">{{ listing.title }}</a>
-    </h3>
+    <h3><a [routerLink]="['/listings', listing.id]">{{ listing.title }}</a></h3>
     <p>{{ listing.description }}</p>
     <p><strong>Price:</strong> ${{ listing.price }}</p>
     <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
-    
-    <!-- Show Edit and Delete buttons ONLY if the logged-in user is the owner -->
+
+    <!-- Show Edit/Delete buttons if the user owns the listing -->
     <div *ngIf="listing.user_id === userId">
       <button (click)="editListing(listing.id)">Edit</button>
       <button (click)="deleteListing(listing.id)">Delete</button>

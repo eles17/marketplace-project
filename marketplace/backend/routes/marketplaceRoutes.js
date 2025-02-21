@@ -29,11 +29,37 @@ const router = express.Router();
  // Fetch all listings
  router.get('/listings', async (req, res) => {
     try {
-        const result = await pool.query(
-            `SELECT id, title, description, price, category, created_at, user_id, image_url 
-             FROM listings 
-             ORDER BY created_at DESC`
-        );
+        let query = "SELECT * FROM listings WHERE 1=1";
+        let queryParams = [];
+
+        if (req.query.category) {
+            query += " AND category = $1";
+            queryParams.push(req.query.category);
+        }
+        if (req.query.min_price) {
+            query += " AND price >= $2";
+            queryParams.push(req.query.min_price);
+        }
+        if (req.query.max_price) {
+            query += " AND price <= $3";
+            queryParams.push(req.query.max_price);
+        }
+        if (req.query.search) {
+            query += " AND (title ILIKE $4 OR description ILIKE $5)";
+            queryParams.push(`%${req.query.search}%`, `%${req.query.search}%`);
+        }
+
+        if (req.query.sort === 'lowPrice') {
+            query += " ORDER BY price ASC";
+        } else if (req.query.sort === 'highPrice') {
+            query += " ORDER BY price DESC";
+        } else if (req.query.sort === 'oldest') {
+            query += " ORDER BY created_at ASC";
+        } else {
+            query += " ORDER BY created_at DESC";
+        }
+
+        const result = await pool.query(query, queryParams);
         res.json(result.rows);
     } catch (error) {
         console.error("Error fetching listings:", error);

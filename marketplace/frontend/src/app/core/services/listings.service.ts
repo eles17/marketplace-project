@@ -17,8 +17,19 @@ export class ListingsService {
     return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   }
 
-  getListings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
+  getCategories(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/categories`, { headers: this.getAuthHeaders() });
+  }
+
+  getListings(filters: any = {}): Observable<any[]> {
+    const params = new URLSearchParams();
+    if (filters.category) params.append('category', filters.category);
+    if (filters.min_price) params.append('min_price', filters.min_price.toString());
+    if (filters.max_price) params.append('max_price', filters.max_price.toString());
+    if (filters.search) params.append('search', filters.search);
+    if (filters.sort) params.append('sort', filters.sort);
+  
+    return this.http.get<any[]>(`${this.apiUrl}/listings?${params.toString()}`, { headers: this.getAuthHeaders() });
   }
 
   getListingById(id: number): Observable<any> {
