@@ -40,24 +40,27 @@ export class ListingsComponent implements OnInit {
   }
   
   fetchListings(): void {
-    this.listingsService.getListings({
-      category: this.selectedMainCategory,
-      min_price: this.minPrice,
-      max_price: this.maxPrice,
-      search: this.searchQuery,
-      sort: this.sortOption
-    }).subscribe({
-      next: (data: any[]) => { // Explicitly define type
+    const filters = {
+      category: this.selectedMainCategory || '',
+      min_price: this.minPrice || '',
+      max_price: this.maxPrice || '',
+      search: this.searchQuery || '',
+      sort: this.sortOption || 'newest'
+    };
+  
+    this.listingsService.getListings(filters).subscribe({
+      next: (data: any[]) => {
         this.listings = data;
       },
-      error: (err: any) => { // Explicitly define type
-        console.error("Error fetching listings:", err);
+      error: (err: any) => {
+        console.error('Error fetching listings:', err);
       }
     });
   }
-
+  
+  // Trigger fetching when filters are applied
   applyFilters(): void {
-    this.fetchListings();
+    this.fetchListings(); // Calls fetchListings() with the latest filters
   }
 
   goToAddListing() {

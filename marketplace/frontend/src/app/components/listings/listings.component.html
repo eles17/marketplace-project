@@ -2,48 +2,55 @@
 
 <!-- Filters Section -->
 <div class="filters">
-  <label>Main Category:</label>
-  <select [(ngModel)]="selectedMainCategory" (change)="applyFilters()">
-    <option value="">All</option>
-    <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-  </select>
-
-  <label>Price Range:</label>
-  <input type="number" [(ngModel)]="minPrice" placeholder="Min Price">
-  <input type="number" [(ngModel)]="maxPrice" placeholder="Max Price">
-
-  <label>Search:</label>
-  <input type="text" [(ngModel)]="searchQuery" placeholder="Search Listings">
-
-  <label>Sort By:</label>
-  <select [(ngModel)]="sortOption" (change)="applyFilters()">
-    <option value="newest">Newest First</option>
-    <option value="oldest">Oldest First</option>
-    <option value="lowPrice">Price: Low to High</option>
-    <option value="highPrice">Price: High to Low</option>
-  </select>
-</div>
-
-<!-- Listings Display -->
-<div *ngIf="listings.length > 0; else noListings">
-  <div *ngFor="let listing of listings">
-    <h3><a [routerLink]="['/listings', listing.id]">{{ listing.title }}</a></h3>
-    <p>{{ listing.description }}</p>
-    <p><strong>Price:</strong> ${{ listing.price }}</p>
-    <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
-
-    <!-- Show Edit/Delete buttons if the user owns the listing -->
-    <div *ngIf="listing.user_id === userId">
-      <button (click)="editListing(listing.id)">Edit</button>
-      <button (click)="deleteListing(listing.id)">Delete</button>
-    </div>
-
-    <hr />
+  <div>
+    <label>Main Category:</label>
+    <select [(ngModel)]="selectedMainCategory">
+      <option value="">All</option>
+      <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+    </select>
+  
+    <label>Min Price:</label>
+    <input type="number" [(ngModel)]="minPrice" placeholder="Min Price">
+  
+    <label>Max Price:</label>
+    <input type="number" [(ngModel)]="maxPrice" placeholder="Max Price">
+  
+    <label>Search:</label>
+    <input type="text" [(ngModel)]="searchQuery" placeholder="Enter search term">
+  
+    <label>Sort By:</label>
+    <select [(ngModel)]="sortOption">
+      <option value="newest">Newest</option>
+      <option value="lowest_price">Lowest Price</option>
+      <option value="highest_price">Highest Price</option>
+    </select>
+  
+    <!-- Search Button to apply filters -->
+    <button (click)="applyFilters()">Search</button>
   </div>
-</div>
-
-<ng-template #noListings>
-  <p>No listings available.</p>
-</ng-template>
-
-<button (click)="goToAddListing()">Add Listing</button>
+  
+  <hr>
+  
+  <div *ngIf="listings.length > 0; else noListings">
+    <div *ngFor="let listing of listings">
+      <h3>
+        <a [routerLink]="['/listings', listing.id]">{{ listing.title }}</a>
+      </h3>
+      <p>{{ listing.description }}</p>
+      <p><strong>Price:</strong> ${{ listing.price }}</p>
+      <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
+  
+      <div *ngIf="listing.user_id === userId">
+        <button (click)="editListing(listing.id)">Edit</button>
+        <button (click)="deleteListing(listing.id)">Delete</button>
+      </div>
+  
+      <hr />
+    </div>
+  </div>
+  
+  <ng-template #noListings>
+    <p>No listings available.</p>
+  </ng-template>
+  
+  <button (click)="goToAddListing()">Add Listing</button>
