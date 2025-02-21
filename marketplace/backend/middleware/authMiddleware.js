@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const secretKey = process.env.JWT_SECRET || 'yourSecretKey'; 
 
 module.exports = function(req, res, next){
     const authHeader = req.header("Authorization"); // Read token from request headers
@@ -8,21 +9,23 @@ module.exports = function(req, res, next){
     } 
     
     try{ // Verify token -- expected "Beatet <token>"
-        const token = authHeader.split(" ")[1];//extract token after "Bearer"
-
-        if (!token){
-            return res.statur(400).json({ message: "Invalid token format"});
+        const parts = authHeader.split(" ");
+        if (parts.length !== 2 || parts[0] !== "Bearer") {
+            return res.status(400).json({ message: "Invalid token format" }); // Fix typo (statur → status)
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        //check if user is banned
-        if (decoded.is_banned){
-            return res.status(403).json({message: "our account has been banned."});
+        const token = parts[1]; // Extract token after "Bearer"
+        const decoded = jwt.verify(token, secretKey); // Verify JWT token
+
+        // Check if user is banned
+        if (decoded.is_banned) {
+            return res.status(403).json({ message: "Your account has been banned." });
         }
 
         req.user = decoded; // Attach user data to request
-        next(); // proceed to next middleware or route handlar ---continues processing the request
-    } catch (err){
-        res.status(400).json({ message: "Invalid token"});
+        next(); // Continue request processing
+    } catch (err) {
+        console.error("JWT Verification Error:", err);
+        return res.status(401).json({ message: "Unauthorized: Invalid or expired token" });
     }
 };

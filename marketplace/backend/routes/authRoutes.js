@@ -119,7 +119,7 @@ router.post('/login', loginLimiter,
                     is_banned: user.rows[0].is_banned
                 },
                 process.env.JWT_SECRET,
-                { expiresIn: "1h" }
+                { expiresIn: "24h" }
             );
 
             res.json({ message: "Login successful", token });
