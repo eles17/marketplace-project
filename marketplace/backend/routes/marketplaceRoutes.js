@@ -78,6 +78,62 @@ router.get('/listings', async (req, res) => {
     }
 });
 
+// Get all users
+router.get('/users', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT id, name, email, status FROM users');
+      res.json(result.rows);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      res.status(500).json({ error: "Server error fetching users" });
+    }
+  });
+  
+  // Update user status (e.g., ban/unban)
+  router.patch('/users/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body; // expected status values: 'active', 'banned'
+  
+    if (!status || !['active', 'banned'].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+  
+    try {
+      const result = await pool.query(
+        'UPDATE users SET status = $1 WHERE id = $2 RETURNING id, name, email, status',
+        [status, id]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      res.json({ message: "User status updated", user: result.rows[0] });
+    } catch (err) {
+      console.error("Error updating user status:", err);
+      res.status(500).json({ error: "Server error updating user status" });
+    }
+  });
+  
+  // Delete a user
+  router.delete('/users/:id', authMiddleware, async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      res.json({ message: "User deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      res.status(500).json({ error: "Server error deleting user" });
+    }
+  });
+
+
 // Fetch categories with subcategories
 router.get('/categories', async (req, res) => {
     try {

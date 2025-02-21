@@ -52,4 +52,17 @@ export class ListingsService {
   updateListing(id: number, updatedListing: any): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/listings/${id}`, updatedListing, { headers: this.getAuthHeaders() });
   }
+
+  //user management (Admin)
+  updateUserStatus(userId: number, status: string): Observable<any> {
+    return this.http.patch(`/api/users/${userId}`, { status });
+  }
+  
+  deleteUser(userId: number): Observable<any> {
+    return this.http.delete(`/api/users/${userId}`);
+  }
+  
+  getUsers(): Observable<any[]> {
+    return this.http.get<any[]>('/api/users');
+  }
 }
