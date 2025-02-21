@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,10 +10,10 @@ import { environment } from '../../../environments/environment';
 export class ListingsService {
   private apiUrl = `${environment.apiUrl}/marketplace`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = this.authService.getToken();
     return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   }
 
@@ -33,17 +34,6 @@ export class ListingsService {
   }
 
   updateListing(id: number, updatedListing: any): Observable<any> {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error("No token found, authentication failed.");
-      return throwError(() => new Error("Unauthorized: No token provided"));
-    }
-  
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-  
-    return this.http.patch<any>(`${this.apiUrl}/listings/${id}`, updatedListing, { headers });
+    return this.http.patch<any>(`${this.apiUrl}/listings/${id}`, updatedListing, { headers: this.getAuthHeaders() });
   }
 }

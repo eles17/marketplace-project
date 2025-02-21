@@ -22,13 +22,11 @@ export class ListingDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.userId = this.authService.getUserId(); // Retrieve logged-in user ID
-    console.log("Logged-in User ID:", this.userId);
 
     const listingId = Number(this.route.snapshot.paramMap.get('id'));
     this.listingsService.getListingById(listingId).subscribe({
       next: (data: any) => {
         this.listing = data;
-        console.log("Listing Owner ID:", this.listing.user_id);
       },
       error: (err: any) => {
         console.error('Error fetching listing details:', err);

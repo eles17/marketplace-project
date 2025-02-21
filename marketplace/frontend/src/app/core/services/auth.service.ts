@@ -3,19 +3,39 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
+import {jwtDecode} from 'jwt-decode'; // Ensure you install: npm install jwt-decode
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private tokenKey = 'token';
+  private userKey = 'user';
+
   constructor(private http: HttpClient, private router: Router) {}
 
+  login(credentials: { email: string; password: string }): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/auth/login`, credentials).pipe(
+      tap(response => {
+        if (response.token) {
+          localStorage.setItem(this.tokenKey, response.token);
+          localStorage.setItem(this.userKey, JSON.stringify(response.user));
+          this.router.navigate(['/dashboard']); // Redirect after login
+        }
+      })
+    );
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
   getUserId(): number | null {
-    const token = localStorage.getItem('token');
+    const token = this.getToken();
     if (!token) return null;
 
     try {
-      const decoded = JSON.parse(atob(token.split('.')[1])); // Decode JWT
+      const decoded: any = jwtDecode(token); // Decode JWT properly
       return decoded.id || null;
     } catch (error) {
       console.error("Error decoding token:", error);
@@ -23,30 +43,13 @@ export class AuthService {
     }
   }
 
-  login(credentials: { email: string; password: string }): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/auth/login`, credentials).pipe(
-      tap(response => {
-        if (response.token) {
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          console.log("Stored Token:", localStorage.getItem('token'));
-          this.router.navigate(['/dashboard']); // Redirect after login
-        }
-      })
-    );
-  }
-
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('token'); // Check if token exists
+    return !!this.getToken();
   }
 
   logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
     this.router.navigate(['/login']);
-  }
-  
-  getToken(): string | null {
-    return localStorage.getItem('token'); // Retrieve token for requests
   }
 }
