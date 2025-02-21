@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -30,5 +30,20 @@ export class ListingsService {
 
   deleteListing(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });
+  }
+
+  updateListing(id: number, updatedListing: any): Observable<any> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error("No token found, authentication failed.");
+      return throwError(() => new Error("Unauthorized: No token provided"));
+    }
+  
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  
+    return this.http.patch<any>(`${this.apiUrl}/listings/${id}`, updatedListing, { headers });
   }
 }

@@ -1,0 +1,18 @@
+<h2>Edit Listing</h2>
+
+<form (ngSubmit)="updateListing()">
+  <label>Title:</label>
+  <input type="text" [(ngModel)]="listing.title" name="title" required>
+
+  <label>Description:</label>
+  <textarea [(ngModel)]="listing.description" name="description" required></textarea>
+
+  <label>Price:</label>
+  <input type="number" [(ngModel)]="listing.price" name="price" required>
+
+  <label>Category:</label>
+  <input type="text" [(ngModel)]="listing.category" name="category" required>
+
+  <button type="submit">Update Listing</button>
+  <button type="button" (click)="router.navigate(['/listings'])">Cancel</button>
+</form>

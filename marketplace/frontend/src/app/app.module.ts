@@ -13,6 +13,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ListingsComponent } from './components/listings/listings.component';
 import { ListingDetailsComponent } from './components/listings/listing-details/listing-details.component';
 import { AddListingComponent } from './components/listings/add-listing/add-listing.component';
+import { EditListingComponent } from './components/listings/edit-listing/edit-listing.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { AddListingComponent } from './components/listings/add-listing/add-listi
     DashboardComponent,
     ListingsComponent,
     ListingDetailsComponent,
-    AddListingComponent
+    AddListingComponent,
+    EditListingComponent
   ],
   imports: [
     BrowserModule,
