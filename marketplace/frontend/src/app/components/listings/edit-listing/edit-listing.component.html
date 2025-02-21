@@ -1,5 +1,4 @@
 <h2>Edit Listing</h2>
-
 <form (ngSubmit)="updateListing()">
   <label>Title:</label>
   <input type="text" [(ngModel)]="listing.title" name="title" required>
@@ -14,5 +13,5 @@
   <input type="text" [(ngModel)]="listing.category" name="category" required>
 
   <button type="submit">Update Listing</button>
-  <button type="button" (click)="router.navigate(['/listings'])">Cancel</button>
+  <button type="button" (click)="cancel()">Cancel</button>
 </form>

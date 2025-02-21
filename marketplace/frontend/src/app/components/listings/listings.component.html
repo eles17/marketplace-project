@@ -6,8 +6,8 @@
     <p>{{ listing.description }}</p>
     <p><strong>Price:</strong> ${{ listing.price }}</p>
     <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
-
-    <!-- Only show buttons for listings owned by logged-in user -->
+    
+    <!-- Show Edit and Delete buttons ONLY if the logged-in user is the owner -->
     <div *ngIf="listing.user_id === userId">
       <button (click)="editListing(listing.id)">Edit</button>
       <button (click)="deleteListing(listing.id)">Delete</button>

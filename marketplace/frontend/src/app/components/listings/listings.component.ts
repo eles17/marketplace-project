@@ -38,7 +38,7 @@ export class ListingsComponent implements OnInit {
   }
 
   editListing(id: number): void {
-    this.router.navigate(['/listings/edit', id]); // Navigate to edit page
+    this.router.navigate([`/edit-listing/${id}`]); // Navigate to edit page
   }
 
   deleteListing(id: number): void {
