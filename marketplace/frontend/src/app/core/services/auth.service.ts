@@ -56,13 +56,19 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  // Check if the user is logged in
   isLoggedIn(): boolean {
-    return !!this.user; // Return true if there's a user object
+    // Check if user is logged in
+    return !!this.user && !!this.user.token;
   }
 
-  // Check if the user is an admin (based on your user role)
   isAdmin(): boolean {
-    return this.user?.role === 'admin'; // Assuming role is 'admin'
+    // Check if user has admin role
+    return this.user && this.user.role === 'admin';
+  }
+
+  // Example of setting a user (you would call this in the login process)
+  setUser(user: any): void {
+    this.user = user;
+    localStorage.setItem('user', JSON.stringify(user));
   }
 }
