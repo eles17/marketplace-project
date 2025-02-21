@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { HttpHeaders } from '@angular/common/http';
-
 
 @Injectable({
   providedIn: 'root'
@@ -13,27 +11,24 @@ export class ListingsService {
 
   constructor(private http: HttpClient) {}
 
-// Fetch all listings
-getListings(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.apiUrl}/listings`);
-}
-
-// Fetch a single listing by ID
-getListingById(id: number): Observable<any> {
-  return this.http.get<any>(`${this.apiUrl}/listings/${id}`);
-}
-
-createListing(formData: FormData): Observable<any> {
-  const token = localStorage.getItem('token'); // Retrieve token from storage
-  if (!token) {
-    console.error("No token found, authentication failed.");
-    return throwError(() => new Error("Unauthorized: No token provided"));
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   }
 
-  const headers = new HttpHeaders({
-    'Authorization': `Bearer ${token}`, // Ensure "Bearer " prefix is added
-  });
+  getListings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
+  }
 
-  return this.http.post<any>(`${this.apiUrl}/listings`, formData, { headers });
-}
+  getListingById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });
+  }
+
+  createListing(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/listings`, formData, { headers: this.getAuthHeaders() });
+  }
+
+  deleteListing(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });
+  }
 }

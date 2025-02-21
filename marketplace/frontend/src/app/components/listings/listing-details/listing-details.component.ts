@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ListingsService } from '../../../core/services/listings.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ListingsService } from '../../../core/services/listings.service'; 
+import { AuthService } from '../../../core/services/auth.service'; 
 
 @Component({
   selector: 'app-listing-details',
@@ -10,27 +11,43 @@ import { ListingsService } from '../../../core/services/listings.service';
 })
 export class ListingDetailsComponent implements OnInit {
   listing: any;
-  listingId: number | null = null;
+  userId: number | null = null; // Store logged-in user ID
 
   constructor(
     private route: ActivatedRoute,
-    private listingsService: ListingsService
+    private router: Router,
+    private listingsService: ListingsService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.listingId = Number(this.route.snapshot.paramMap.get('id')); // Convert ID to number
-    if (!this.listingId) {
-      console.error("Invalid listing ID");
-      return;
-    }
-    this.fetchListingDetails();
+    this.userId = this.authService.getUserId(); // Retrieve logged-in user ID
+    console.log("Logged-in User ID:", this.userId);
+
+    const listingId = Number(this.route.snapshot.paramMap.get('id'));
+    this.listingsService.getListingById(listingId).subscribe({
+      next: (data: any) => {
+        this.listing = data;
+        console.log("Listing Owner ID:", this.listing.user_id);
+      },
+      error: (err: any) => {
+        console.error('Error fetching listing details:', err);
+      }
+    });
   }
 
-  fetchListingDetails(): void {
-    if (this.listingId) {
-      this.listingsService.getListingById(this.listingId).subscribe(
-        (data) => this.listing = data,
-        (error) => console.error("Error fetching listing details:", error)
+  editListing(): void {
+    this.router.navigate([`/edit-listing/${this.listing.id}`]);
+  }
+
+  deleteListing(): void {
+    if (confirm("Are you sure you want to delete this listing?")) {
+      this.listingsService.deleteListing(this.listing.id).subscribe(
+        () => {
+          alert("Listing deleted successfully!");
+          this.router.navigate(['/listings']);
+        },
+        (error) => console.error("Error deleting listing:", error)
       );
     }
   }

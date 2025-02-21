@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../../core/services/listings.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-add-listing',
@@ -23,7 +24,7 @@ export class AddListingComponent implements OnInit {
   selectedFile: File | null = null;
   errorMessage: string = ''; // Store any errors
 
-  constructor(private listingsService: ListingsService, private http: HttpClient) {}
+  constructor(private listingsService: ListingsService, private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
     this.loadCategories();
@@ -79,22 +80,24 @@ export class AddListingComponent implements OnInit {
       alert('All fields are required');
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('title', this.listing.title);
     formData.append('description', this.listing.description);
     formData.append('price', this.listing.price?.toString() || '0');
     formData.append('category', this.listing.category?.toString() || '');
-
+  
     if (this.selectedFile) {
       formData.append('image', this.selectedFile);
     }
-
+  
     this.listingsService.createListing(formData).subscribe(
       (response) => {
         console.log('Listing created successfully:', response);
         alert("Listing successfully created!");
-        this.resetForm();
+  
+        // Redirect user to the listing details page after successful creation
+        this.router.navigate(['/listings', response.listing.id]); 
       },
       (error) => {
         console.error('Error creating listing:', error);

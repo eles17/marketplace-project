@@ -21,52 +21,6 @@ passwordStrength
     .has().digits(1)  // Must have at least one digit
     .has().not().spaces(); // Should not have spaces
 
-// User Registration
-router.post('/register',
-    [
-        body('email').isEmail().withMessage('Invalid email format'),
-        body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-    ],
-    async (req, res, next) => {  // Added `next` here to fix missing parameter
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const { email, password, full_name, address } = req.body;
-
-        // Validate password strength
-        const passwordCheck = passwordStrength.validate(password);
-        if (!passwordCheck) {
-            return res.status(400).json({ error: "Weak password. Use a mix of uppercase, lowercase, numbers, and symbols." });
-        }
-
-        try {
-            await pool.query("BEGIN"); // Start transaction
-            const userExists = await pool.query("SELECT 1 FROM users WHERE email = $1", [email]);
-            if (userExists.rows.length > 0) {
-                return res.status(400).json({ error: "User already exists" });
-            }
-
-            // Hash password
-            const salt = await bcrypt.genSalt(12);
-            const hashedPassword = await bcrypt.hash(password, salt);
-
-            // Insert new user
-            const newUser = await pool.query(
-                "INSERT INTO users (email, password_hash, full_name, address) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name",
-                [email, hashedPassword, full_name, address]
-            );
-            await pool.query("COMMIT"); // Commit transaction
-
-            res.status(201).json({ message: "User registered successfully", user: newUser.rows[0] });
-        } catch (err) {
-            await pool.query("ROLLBACK"); // Rollback on error
-            next(err);
-        }
-    }
-);
-
 // Rate Limit for Login (5 attempts per 15 min)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 min
@@ -74,7 +28,7 @@ const loginLimiter = rateLimit({
     message: { error: "Too many login attempts. Please try again later." }
 });
 
-// User Login
+// User Login (FIXED)
 router.post('/login', loginLimiter,
     [
         body('email').isEmail().withMessage('Invalid email format'),
@@ -89,47 +43,66 @@ router.post('/login', loginLimiter,
         const { email, password } = req.body;
 
         try {
-            const user = await pool.query("SELECT id, email, password_hash, is_admin, is_banned FROM users WHERE email = $1", [email]);
-            if (user.rows.length === 0) {
+            // Fetch user details including the password hash
+            const userQuery = await pool.query("SELECT id, email, password_hash, full_name, is_admin, is_banned FROM users WHERE email = $1", [email]);
+            
+            if (userQuery.rows.length === 0) {
                 return res.status(400).json({ error: "Invalid email or password" });
             }
 
-            // Check if user is banned
-            if (user.rows[0].is_banned) {
-                return res.status(403).json({ error: "Your account has been banned. Contact support for assistance." });
+            const user = userQuery.rows[0];
+
+            // Check if the user has a password hash in the database
+            if (!user.password_hash) {
+                console.error("Error: User has no stored password hash.");
+                return res.status(500).json({ error: "Server error. Missing password hash." });
             }
 
-            // Compare passwords
-            const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
+            // Validate the password (Ensure both values exist)
+            const validPassword = await bcrypt.compare(password, user.password_hash);
             
             console.log("Entered Password:", password);
-            console.log("Stored Hash:", user.rows[0].password_hash);
+            console.log("Stored Hash:", user.password_hash);
             console.log("Password Match:", validPassword);
 
             if (!validPassword) {
                 return res.status(400).json({ error: "Invalid email or password" });
             }
 
+            // Check if user is banned
+            if (user.is_banned) {
+                return res.status(403).json({ error: "Your account has been banned. Contact support for assistance." });
+            }
+
             // Generate JWT token
             const token = jwt.sign(
                 { 
-                    id: user.rows[0].id,
-                    email: user.rows[0].email,
-                    is_admin: user.rows[0].is_admin,
-                    is_banned: user.rows[0].is_banned
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.full_name,
+                    is_admin: user.is_admin
                 },
                 process.env.JWT_SECRET,
                 { expiresIn: "24h" }
             );
 
-            res.json({ message: "Login successful", token });
+            res.json({
+                message: "Login successful",
+                token,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    full_name: user.full_name
+                }
+            });
         } catch (err) {
+            console.error("Login Error:", err);
             next(err);
         }
     }
 );
 
-// Fetch user profile
+// Fetch user profile (Uses Token)
 router.get('/profile', async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;

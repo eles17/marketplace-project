@@ -92,11 +92,11 @@ router.post('/listings', authMiddleware, upload.single('image'), async (req, res
     }
   });
 
-router.get('/listings/:id', async (req, res) => {
+  router.get('/listings/:id', async (req, res) => {
     const { id } = req.params;
     try {
       const result = await pool.query(
-        "SELECT id, title, description, price, category, created_at, user_id FROM listings WHERE id = $1",
+        `SELECT id, title, description, price, category, created_at, user_id FROM listings WHERE id = $1`, 
         [id]
       );
       if (result.rows.length === 0) {
@@ -107,7 +107,7 @@ router.get('/listings/:id', async (req, res) => {
       console.error("Error fetching listing:", error);
       res.status(500).json({ error: "Server error fetching listing" });
     }
-  });
+});
 
 
 // Protected route: Get user's listings
@@ -168,7 +168,55 @@ router.get('/my-listings', authMiddleware, async (req, res) => {
     }
 });
 
+router.patch('/listings/:id', authMiddleware, async (req, res) => {
+    const { title, description, price, category } = req.body;
+    const listingId = req.params.id;
+    const userId = req.user.id; // Get logged-in user ID from token
 
+    try {
+        const existingListing = await pool.query(
+            "SELECT * FROM listings WHERE id = $1 AND user_id = $2", 
+            [listingId, userId]
+        );
+
+        if (existingListing.rows.length === 0) {
+            return res.status(403).json({ error: "Unauthorized: You can only edit your own listings." });
+        }
+
+        const updatedListing = await pool.query(
+            `UPDATE listings SET title = $1, description = $2, price = $3, category = $4 
+             WHERE id = $5 AND user_id = $6 RETURNING *`,
+            [title, description, price, category, listingId, userId]
+        );
+
+        res.json({ message: "Listing updated successfully", listing: updatedListing.rows[0] });
+    } catch (err) {
+        console.error("Error updating listing:", err);
+        res.status(500).json({ error: "Server error updating listing" });
+    }
+});
+
+router.delete('/listings/:id', authMiddleware, async (req, res) => {
+    const listingId = req.params.id;
+    const userId = req.user.id; // Get logged-in user ID from token
+
+    try {
+        const existingListing = await pool.query(
+            "SELECT * FROM listings WHERE id = $1 AND user_id = $2", 
+            [listingId, userId]
+        );
+
+        if (existingListing.rows.length === 0) {
+            return res.status(403).json({ error: "Unauthorized: You can only delete your own listings." });
+        }
+
+        await pool.query("DELETE FROM listings WHERE id = $1 AND user_id = $2", [listingId, userId]);
+        res.json({ message: "Listing deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting listing:", err);
+        res.status(500).json({ error: "Server error deleting listing" });
+    }
+});
 
 // Protected route: Add a new listing with image upload
 router.post('/add-listing', authMiddleware, upload.single('image'), validateUserInput, async (req, res) => {

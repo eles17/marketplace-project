@@ -4,7 +4,16 @@
   <p><strong>Price:</strong> ${{ listing.price }}</p>
   <p><strong>Description:</strong> {{ listing.description }}</p>
   <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
+  <p><strong>Listing Owner ID:</strong> {{ listing.user_id }}</p>
+  <p><strong>Logged-in User ID:</strong> {{ userId }}</p>
+
   <button routerLink="/listings">Back to Listings</button>
+
+  <!-- Show Edit and Delete buttons ONLY if the logged-in user is the owner -->
+  <div *ngIf="listing?.user_id === userId">
+    <button (click)="editListing()">Edit</button>
+    <button (click)="deleteListing()">Delete</button>
+  </div>
 </div>
 
 <ng-template #loading>

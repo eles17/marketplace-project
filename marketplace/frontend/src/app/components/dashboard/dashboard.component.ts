@@ -1,25 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: false,
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  userData: any;
+  user: any = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    this.apiService.getUserProfile().subscribe({
-      next: (data) => {
-        this.userData = data;
-      },
-      error: (err) => {
-        console.error("Error fetching user data:", err);
-      }
-    });
+    this.user = JSON.parse(localStorage.getItem('user') || '{}');
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
