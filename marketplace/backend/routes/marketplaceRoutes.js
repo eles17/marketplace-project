@@ -6,198 +6,138 @@ const path = require('path');
 const { validateUserInput } = require('../middleware/validateMiddleware'); 
 const NodeCache = require('node-cache');
 
-
-// configuer image uploads
+// Configure image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../uploads'); // save images to an accessible path
-        cb(null, uploadPath); // save images in uploads folder
+        const uploadPath = path.join(__dirname, '../uploads');
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname); // unique filename
+        cb(null, Date.now() + '-' + file.originalname);
     }
- });
+});
 
-
- const upload = multer({ storage });
-
-
-const cache = new NodeCache({ stdTTL:600}); //cache data for 10 min
-
+const upload = multer({ storage });
+const cache = new NodeCache({ stdTTL: 600 });
 const router = express.Router();
 
- // Fetch all listings
- router.get('/listings', async (req, res) => {
+// Fetch all listings with filtering
+router.get('/listings', async (req, res) => {
     try {
-        let query = "SELECT * FROM listings WHERE 1=1";
+        let query = `
+            SELECT id, title, description, price, category, subcategory, created_at, user_id, image_url 
+            FROM listings 
+            WHERE 1=1`;
+
         let queryParams = [];
 
-        if (req.query.category) {
-            query += " AND category = $1";
-            queryParams.push(req.query.category);
+        // Apply Main Category Filter
+        if (req.query.category && !isNaN(parseInt(req.query.category))) {
+            query += ` AND category = $${queryParams.length + 1}`;
+            queryParams.push(parseInt(req.query.category));
         }
+
+        // Apply Subcategory Filter
+        if (req.query.subcategory && !isNaN(parseInt(req.query.subcategory))) {
+            query += ` AND subcategory = $${queryParams.length + 1}`;
+            queryParams.push(parseInt(req.query.subcategory));
+        }
+
+        // Apply Min Price Filter
         if (req.query.min_price) {
-            query += " AND price >= $2";
-            queryParams.push(req.query.min_price);
+            query += ` AND price >= $${queryParams.length + 1}`;
+            queryParams.push(parseFloat(req.query.min_price));
         }
+
+        // Apply Max Price Filter
         if (req.query.max_price) {
-            query += " AND price <= $3";
-            queryParams.push(req.query.max_price);
+            query += ` AND price <= $${queryParams.length + 1}`;
+            queryParams.push(parseFloat(req.query.max_price));
         }
+
+        // Apply Search Query (title or description)
         if (req.query.search) {
-            query += " AND (title ILIKE $4 OR description ILIKE $5)";
+            query += ` AND (title ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
             queryParams.push(`%${req.query.search}%`, `%${req.query.search}%`);
         }
 
-        if (req.query.sort === 'lowPrice') {
-            query += " ORDER BY price ASC";
-        } else if (req.query.sort === 'highPrice') {
-            query += " ORDER BY price DESC";
-        } else if (req.query.sort === 'oldest') {
-            query += " ORDER BY created_at ASC";
+        // Apply Sorting
+        if (req.query.sort === 'lowest_price') {
+            query += ` ORDER BY price ASC`;
+        } else if (req.query.sort === 'highest_price') {
+            query += ` ORDER BY price DESC`;
         } else {
-            query += " ORDER BY created_at DESC";
+            query += ` ORDER BY created_at DESC`;
         }
 
         const result = await pool.query(query, queryParams);
         res.json(result.rows);
     } catch (error) {
-        console.error("Error fetching listings:", error);
+        console.error("Error fetching listings with filters:", error);
         res.status(500).json({ error: "Server error fetching listings" });
     }
 });
 
+// Fetch categories with subcategories
 router.get('/categories', async (req, res) => {
     try {
-        // Fetch categories from DB
-        const categoriesResult = await pool.query("SELECT * FROM categories");
+        const mainCategories = await pool.query(
+            "SELECT id, name FROM categories WHERE sub1_id IS NULL"
+        );
 
-        // Separate main categories
-        const mainCategories = [
-            { id: 1, name: "Vehicles", subcategories: [] },
-            { id: 2, name: "Real Estate", subcategories: [] },
-            { id: 3, name: "Retail", subcategories: [] }
-        ];
+        const subCategories = await pool.query(
+            "SELECT id, name, sub1_id FROM categories WHERE sub1_id IS NOT NULL"
+        );
 
-        // Map categories into correct subcategories
-        categoriesResult.rows.forEach(category => {
-            if (["Cars", "Motorcycles"].includes(category.name)) {
-                mainCategories[0].subcategories.push({ id: category.id, name: category.name }); // Vehicles
-            } else if (["Apartments", "Houses"].includes(category.name)) {
-                mainCategories[1].subcategories.push({ id: category.id, name: category.name }); // Real Estate
-            } else {
-                mainCategories[2].subcategories.push({ id: category.id, name: category.name }); // Retail
-            }
-        });
+        const structuredCategories = mainCategories.rows.map(main => ({
+            id: main.id,
+            name: main.name,
+            subcategories: subCategories.rows
+                .filter(sub => sub.sub1_id === main.id)
+                .map(sub => ({ id: sub.id, name: sub.name }))
+        }));
 
-        res.json(mainCategories);
+        res.json(structuredCategories);
     } catch (err) {
         console.error("Error fetching categories:", err);
         res.status(500).json({ error: "Failed to fetch categories" });
     }
 });
 
-
-// fetch all products (listings)
+// Add a new listing with image upload
 router.post('/listings', authMiddleware, upload.single('image'), async (req, res) => {
-    const { title, description, price, category } = req.body;
+    const { title, description, price, category, subcategory } = req.body;
     const userId = req.user.id;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-  
+
+    // Convert category and subcategory to integers
+    const categoryId = parseInt(category, 10);
+    const subcategoryId = subcategory ? parseInt(subcategory, 10) : null;
+
+    // Validate required fields
+    if (!title || !description || isNaN(price) || price <= 0 || isNaN(categoryId)) {
+        return res.status(400).json({ error: "Missing or invalid required fields." });
+    }
+
     try {
-      const newListing = await pool.query(
-        `INSERT INTO listings (title, description, price, category, user_id, image_url) 
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [title, description, price, category, userId, imageUrl]
-      );
-  
-      res.status(201).json({ message: "Listing created", listing: newListing.rows[0] });
+        const newListing = await pool.query(
+            `INSERT INTO listings (title, description, price, category, subcategory, user_id, image_url) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [title, description, parseFloat(price), categoryId, subcategoryId, userId, imageUrl]
+        );
+
+        res.status(201).json({ message: "Listing created", listing: newListing.rows[0] });
     } catch (err) {
-      console.error("Error adding listing:", err);
-      res.status(500).json({ error: "Server error adding listing" });
-    }
-  });
-
-  router.get('/listings/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-      const result = await pool.query(
-        `SELECT id, title, description, price, category, created_at, user_id FROM listings WHERE id = $1`, 
-        [id]
-      );
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Listing not found" });
-      }
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error("Error fetching listing:", error);
-      res.status(500).json({ error: "Server error fetching listing" });
+        console.error("Error adding listing:", err);
+        res.status(500).json({ error: "Server error adding listing" });
     }
 });
 
-
-// Protected route: Get user's listings
-router.get('/my-listings', authMiddleware, async (req, res) => {
-    try {
-        console.log("User Data from Token:", req.user); // Debugging log
-
-        const userId = req.user.id;
-        if (!userId){
-            return res.status(401).json({ message: "Unauthorized: No user ID found in token." });
-        }
-
-        // Pagination
-        const page = parseInt(req.query.page) || 1; // Default to page 1
-        const limit = parseInt(req.query.limit) || 10; // Default limit is 10 items per page
-        const offset = (page - 1) * limit; // Calculate offset for pagination
-
-        // Filters
-        const { category, min_price, max_price, search } = req.query;
-        let query = `
-            SELECT id, title, description, price, category, created_at 
-            FROM listings 
-            WHERE user_id = $1
-        `;
-        let queryParams = [userId];
-
-        if (category) {
-            query += ` AND category = $${queryParams.length + 1}`;
-            queryParams.push(category);
-        }
-        if (min_price) {
-            query += ` AND price >= $${queryParams.length + 1}`;
-            queryParams.push(min_price);
-        }
-        if (max_price) {
-            query += ` AND price <= $${queryParams.length + 1}`;
-            queryParams.push(max_price);
-        }
-        if (search) {
-            query += ` AND (title ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
-            queryParams.push(`%${search}%`, `%${search}%`);
-        }
-
-        query += ` ORDER BY created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
-        queryParams.push(limit, offset);
-
-        const listings = await pool.query(query, queryParams);
-        
-        res.json({
-            page,
-            limit, 
-            total: listings.rowCount,
-            listings: listings.rows
-        });
-
-    } catch (err){
-        next(err);
-    }
-});
-
+// Update a listing
 router.patch('/listings/:id', authMiddleware, async (req, res) => {
-    const { title, description, price, category } = req.body;
+    const { title, description, price, category, subcategory } = req.body;
     const listingId = req.params.id;
-    const userId = req.user.id; // Get logged-in user ID from token
+    const userId = req.user.id;
 
     try {
         const existingListing = await pool.query(
@@ -210,9 +150,9 @@ router.patch('/listings/:id', authMiddleware, async (req, res) => {
         }
 
         const updatedListing = await pool.query(
-            `UPDATE listings SET title = $1, description = $2, price = $3, category = $4 
-             WHERE id = $5 AND user_id = $6 RETURNING *`,
-            [title, description, price, category, listingId, userId]
+            `UPDATE listings SET title = $1, description = $2, price = $3, category = $4, subcategory = $5 
+             WHERE id = $6 AND user_id = $7 RETURNING *`,
+            [title, description, parseFloat(price), parseInt(category), parseInt(subcategory), listingId, userId]
         );
 
         res.json({ message: "Listing updated successfully", listing: updatedListing.rows[0] });
@@ -222,9 +162,10 @@ router.patch('/listings/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// Delete a listing
 router.delete('/listings/:id', authMiddleware, async (req, res) => {
     const listingId = req.params.id;
-    const userId = req.user.id; // Get logged-in user ID from token
+    const userId = req.user.id;
 
     try {
         const existingListing = await pool.query(
@@ -241,37 +182,6 @@ router.delete('/listings/:id', authMiddleware, async (req, res) => {
     } catch (err) {
         console.error("Error deleting listing:", err);
         res.status(500).json({ error: "Server error deleting listing" });
-    }
-});
-
-// Protected route: Add a new listing with image upload
-router.post('/add-listing', authMiddleware, upload.single('image'), validateUserInput, async (req, res) => {
-    const { title, category, description, price } = req.body;
-    
-    // Check if image was uploaded
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-    // Ensure price is a valid number
-    if (isNaN(price) || price <= 0){
-        return res.status(400).json({ error: "Invalid price. Must be a positive number." });
-    }
-
-    // Check for missing fields
-    if (!title || !category || !description){
-        return res.status(400).json({ error: "Missing required fields." });
-    }
-
-    try {
-        const newListing = await pool.query(
-           `INSERT INTO listings (title, description, price, category, user_id, image_url) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-            [title, description, price, category, req.user.id, imageUrl]
-        );
-        console.log(`Listing created with ID: ${newListing.rows[0].id}, Image URL: ${imageUrl}`);
-
-        res.status(201).json({ message: "Listing created", listing: newListing.rows[0]});
-    } catch (err){
-        next(err);
     }
 });
 

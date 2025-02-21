@@ -23,18 +23,19 @@ export class ListingsService {
 
   getListings(filters: any = {}): Observable<any[]> {
     let queryParams = new URLSearchParams();
-  
-    // Append filters if they exist
-    if (filters.category) queryParams.append('category', filters.category);
-    if (filters.min_price) queryParams.append('min_price', filters.min_price);
-    if (filters.max_price) queryParams.append('max_price', filters.max_price);
-    if (filters.search) queryParams.append('search', filters.search);
-    if (filters.sort) queryParams.append('sort', filters.sort);
-  
-    return this.http.get<any[]>(`${this.apiUrl}/listings?${queryParams.toString()}`, {
-      headers: this.getAuthHeaders(),
+
+    Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+            if (key === 'category') {
+                queryParams.append(key, String(parseInt(filters[key]))); 
+            } else {
+                queryParams.append(key, filters[key]);
+            }
+        }
     });
-  }
+
+    return this.http.get<any[]>(`${this.apiUrl}/listings?${queryParams.toString()}`, { headers: this.getAuthHeaders() });
+}
 
   getListingById(id: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });

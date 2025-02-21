@@ -4,33 +4,45 @@
 <div class="filters">
   <div>
     <label>Main Category:</label>
-    <select [(ngModel)]="selectedMainCategory">
-      <option value="">All</option>
-      <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-    </select>
-  
+<select [(ngModel)]="selectedMainCategory" (change)="onMainCategoryChange()">
+  <option [value]="null">All</option>
+  <option *ngFor="let category of categories" [value]="category.id">
+    {{ category.name }}
+  </option>
+</select>
+
+<!-- Show Subcategory only if there are options -->
+<label *ngIf="subcategories.length > 0">Subcategory:</label>
+<select *ngIf="subcategories.length > 0" [(ngModel)]="selectedSubCategory">
+  <option [value]="null">All</option>
+  <option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
+    {{ subcategory.name }}
+  </option>
+</select>
+
     <label>Min Price:</label>
     <input type="number" [(ngModel)]="minPrice" placeholder="Min Price">
-  
+
     <label>Max Price:</label>
     <input type="number" [(ngModel)]="maxPrice" placeholder="Max Price">
-  
+
     <label>Search:</label>
     <input type="text" [(ngModel)]="searchQuery" placeholder="Enter search term">
-  
+
     <label>Sort By:</label>
     <select [(ngModel)]="sortOption">
       <option value="newest">Newest</option>
       <option value="lowest_price">Lowest Price</option>
       <option value="highest_price">Highest Price</option>
     </select>
-  
-    <!-- Search Button to apply filters -->
+
+    <!-- Search and Reset Buttons -->
     <button (click)="applyFilters()">Search</button>
+    <button (click)="resetFilters()">Reset</button>
   </div>
-  
+
   <hr>
-  
+
   <div *ngIf="listings.length > 0; else noListings">
     <div *ngFor="let listing of listings">
       <h3>
@@ -39,18 +51,19 @@
       <p>{{ listing.description }}</p>
       <p><strong>Price:</strong> ${{ listing.price }}</p>
       <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
-  
+
       <div *ngIf="listing.user_id === userId">
         <button (click)="editListing(listing.id)">Edit</button>
         <button (click)="deleteListing(listing.id)">Delete</button>
       </div>
-  
+
       <hr />
     </div>
   </div>
-  
-  <ng-template #noListings>
-    <p>No listings available.</p>
-  </ng-template>
-  
-  <button (click)="goToAddListing()">Add Listing</button>
+</div>
+
+<ng-template #noListings>
+  <p>No listings available.</p>
+</ng-template>
+
+<button (click)="goToAddListing()">Add Listing</button>
