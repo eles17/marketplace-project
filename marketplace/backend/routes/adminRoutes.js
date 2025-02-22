@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 // ban a user
-router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res,next) => {
     const { id } = req.params;
 
     try{
@@ -19,12 +19,12 @@ router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) =
 
         res.json({ message: "User banned successfully.", is_banned: true });
     } catch (err) {
-        next(err)
+        next(err);
     }
 });
 
 // unban user
-router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res) => {
+router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res,next) => {
     const { id } = req.params;
 
     try{
@@ -41,7 +41,7 @@ router.put('/users/:id/unban', authMiddleware, adminMiddleware, async (req, res)
 });
 
 // get all users that are admins --> ADMINS ONLY
-router.get('/users', authMiddleware, adminMiddleware, async(req, res) => {
+router.get('/users', authMiddleware, adminMiddleware, async(req, res,next) => {
     try{
         const users = await pool.query("SELECT id, email, full_name, is_admin, is_banned FROM users ORDER BY created_at DESC");
         res.json(users.rows);
@@ -51,7 +51,7 @@ router.get('/users', authMiddleware, adminMiddleware, async(req, res) => {
 });
 
 // update user role ---> MAKE AN ADMIN 
-router.put('/users/:id/make-admin', authMiddleware, adminMiddleware, async(req,res) =>{
+router.put('/users/:id/make-admin', authMiddleware, adminMiddleware, async(req,res,next) =>{
     const {id} = req.params;
 
     try{
@@ -68,7 +68,7 @@ router.put('/users/:id/make-admin', authMiddleware, adminMiddleware, async(req,r
 });
 
 // DELETE USER
-router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res) =>{
+router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res,next) =>{
     const {id} = req.params;
 
     try{
@@ -86,7 +86,7 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res) =>{
 
 
 // GET ALL LISTINGS --> Admins only
-router.get('/listings', authMiddleware, adminMiddleware, async(req, res) => {    
+router.get('/listings', authMiddleware, adminMiddleware, async(req, res, next) => {    
     try{
     const listings = await pool.query("SELECT id, name, price, category_id, created_at FROM products ORDER BY created_at DESC");
     res.json(listings.rows);
@@ -96,7 +96,7 @@ router.get('/listings', authMiddleware, adminMiddleware, async(req, res) => {
 });
 
 // DELETE a listing
-router.delete('/listings/:id', authMiddleware, adminMiddleware, async(req,res) =>{
+router.delete('/listings/:id', authMiddleware, adminMiddleware, async(req,res, next) =>{
     const {id} = req.params;
 
     try{

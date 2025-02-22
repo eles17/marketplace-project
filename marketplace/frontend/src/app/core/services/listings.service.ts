@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 })
 export class ListingsService {
   private apiUrl = `${environment.apiUrl}/marketplace`;
+ 
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -54,12 +55,16 @@ export class ListingsService {
   }
 
   //user management (Admin)
-  updateUserStatus(userId: number, status: string): Observable<any> {
-    return this.http.patch(`/api/users/${userId}`, { status });
+  banUser(userId: number): Observable<any> {
+    return this.http.put(`/api/users/${userId}/ban`, {}, { headers: this.getAuthHeaders() });
+  }
+  
+  unbanUser(userId: number): Observable<any> {
+    return this.http.put(`/api/users/${userId}/unban`, {}, { headers: this.getAuthHeaders() });
   }
   
   deleteUser(userId: number): Observable<any> {
-    return this.http.delete(`/api/users/${userId}`);
+    return this.http.delete(`/api/users/${userId}`, { headers: this.getAuthHeaders() });
   }
   
   getUsers(): Observable<any[]> {
