@@ -1,8 +1,10 @@
 <h2>Admin Panel</h2>
 
 <!-- Show loading spinner -->
-<div *ngIf="isLoading">Loading users...</div>
+<div *ngIf="isLoading">Loading data...</div>
 
+<!-- Users Table -->
+<h3>Users</h3>
 <table *ngIf="!isLoading">
   <thead>
     <tr>
@@ -23,6 +25,31 @@
         <button (click)="banUser(user.id)" *ngIf="!user.is_banned">Ban</button>
         <button (click)="unbanUser(user.id)" *ngIf="user.is_banned">Unban</button>
         <button (click)="deleteUser(user.id)">Delete</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Listings Table -->
+<h3>Listings</h3>
+<table *ngIf="!isLoading">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Price</th>
+      <th>Category</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let listing of listings">
+      <td>{{ listing.id }}</td>
+      <td>{{ listing.name }}</td>
+      <td>{{ listing.price | currency }}</td>
+      <td>{{ listing.category_id }}</td>
+      <td>
+        <button (click)="deleteListing(listing.id)">Delete</button>
       </td>
     </tr>
   </tbody>

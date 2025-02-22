@@ -11,6 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AdminPanelComponent implements OnInit {
   users: any[] = []; // Store users data
+  listings: any[] = [];
   isLoading = false; //loading state
 
   constructor(
@@ -21,6 +22,7 @@ export class AdminPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchUsers();
+    this.fetchListings();
   }
 
   fetchUsers(): void {
@@ -36,6 +38,18 @@ export class AdminPanelComponent implements OnInit {
       }
     });
   }
+
+  fetchListings(): void {
+    this.listingsService.getAllListings().subscribe({
+      next: (data: any[]) => {
+        this.listings = data;
+      },
+      error: (err) => {
+        console.error('Error fetching listings:', err);
+      }
+    });
+  }
+
 
   banUser(id: number): void {
     this.listingsService.banUser(id).subscribe({
@@ -68,7 +82,7 @@ deleteUser(id: number): void {
     this.listingsService.deleteUser(id).subscribe({
       next: () => {
         alert('User deleted successfully!');
-        this.fetchUsers(); 
+        this.fetchUsers();
       },
       error: (err) => {
         console.error('Error deleting user:', err);
@@ -77,4 +91,19 @@ deleteUser(id: number): void {
     });
   }
 }
+
+deleteListing(id: number): void {
+    if (confirm('Are you sure you want to delete this listing?')) {
+      this.listingsService.deleteListingAsAdmin(id).subscribe({
+        next: () => {
+          alert('Listing deleted successfully!');
+          this.fetchListings();
+        },
+        error: (err) => {
+          console.error('Error deleting listing:', err);
+          alert('Error deleting listing.');
+        }
+      });
+    }
+  }
 }

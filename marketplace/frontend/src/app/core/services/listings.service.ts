@@ -71,4 +71,12 @@ export class ListingsService {
   deleteUser(userId: number): Observable<any> {
     return this.http.delete(`/api/admin/users/${userId}`, { headers: this.getAuthHeaders() });
   }
+
+  getAllListings(): Observable<any[]> {
+    return this.http.get<any[]>('/api/admin/listings', { headers: this.getAuthHeaders() });
+  }
+  
+  deleteListingAsAdmin(listingId: number): Observable<any> {
+    return this.http.delete(`/api/admin/listings/${listingId}`, { headers: this.getAuthHeaders() });
+  }
 }
