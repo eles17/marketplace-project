@@ -14,40 +14,47 @@ export class AddListingComponent implements OnInit {
   listing = {
     title: '',
     description: '',
-    price: null as number | null, // Ensure price can be null
-    category: null as number | null // Ensure category is treated as a number
+    price: null as number | null,
+    category: null as number | null
   };
 
-  categories: { id: number; name: string; subcategories: { id: number; name: string }[] }[] = [];
-  subcategories: { id: number; name: string }[] = [];
+  // Define only the 3 main categories
+  mainCategories = [
+    { id: 1, name: 'Retail' },
+    { id: 2, name: 'Vehicle' },
+    { id: 3, name: 'Real Estate' }
+  ];
+  
+  subcategories: { id: number; name: string; main_category_id: number }[] = [];
   selectedMainCategory: number | null = null;
   selectedFile: File | null = null;
-  errorMessage: string = ''; // Store error messages
+  errorMessage: string = '';
 
   constructor(private listingsService: ListingsService, private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
-    this.loadCategories();
+    this.loadSubcategories(); // Load all subcategories from backend
   }
 
-  loadCategories(): void {
-    this.http.get<{ id: number; name: string; subcategories: { id: number; name: string }[] }[]>(
-      `${environment.apiUrl}/marketplace/categories`
+  loadSubcategories(): void {
+    this.http.get<{ id: number; name: string; main_category_id: number }[]>(
+      `${environment.apiUrl}/subcategories`
     ).subscribe({
       next: (data) => {
-        this.categories = data.filter(cat => cat.subcategories && cat.subcategories.length > 0); // Ensure only main categories are shown
+        console.log("Subcategories received:", data);
+        this.subcategories = data;
       },
       error: (error) => {
-        console.error('Error fetching categories:', error);
-        this.errorMessage = "Failed to load categories.";
+        console.error('Error fetching subcategories:', error);
+        this.errorMessage = "Failed to load subcategories.";
       }
     });
   }
 
   updateSubcategories(): void {
     if (this.selectedMainCategory) {
-      const selectedCategory = this.categories.find(cat => cat.id === this.selectedMainCategory);
-      this.subcategories = selectedCategory?.subcategories || [];
+      // Filter only subcategories belonging to the selected main category
+      this.subcategories = this.subcategories.filter(sub => sub.main_category_id === this.selectedMainCategory);
     } else {
       this.subcategories = [];
     }
@@ -56,7 +63,7 @@ export class AddListingComponent implements OnInit {
   onFileSelected(event: any): void {
     if (event.target.files.length > 0) {
       const file = event.target.files[0];
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg']; // Restrict file types
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
         alert("Invalid file type. Please select a JPG or PNG image.");
         return;
@@ -96,7 +103,7 @@ export class AddListingComponent implements OnInit {
   isValidListing(): boolean {
     return !!(this.listing.title && this.listing.description && 
               this.listing.price && !isNaN(this.listing.price) &&
-              this.selectedMainCategory);
+              this.selectedMainCategory && this.listing.category);
   }
 
   prepareFormData(): FormData {
@@ -104,7 +111,7 @@ export class AddListingComponent implements OnInit {
     formData.append("title", this.listing.title);
     formData.append("description", this.listing.description);
     formData.append("price", this.listing.price!.toString());
-    formData.append("category", this.selectedMainCategory!.toString());
+    formData.append("category", this.listing.category!.toString());
 
     if (this.selectedFile) {
       formData.append("image", this.selectedFile);
@@ -116,13 +123,13 @@ export class AddListingComponent implements OnInit {
   getListingType(): string {
     switch (this.selectedMainCategory) {
       case 1:
-        return 'products';
+        return 'retail';
       case 2:
-        return 'vehicles';
+        return 'vehicle';
       case 3:
         return 'real-estate';
       default:
-        return 'products';
+        return 'retail';
     }
   }
 }

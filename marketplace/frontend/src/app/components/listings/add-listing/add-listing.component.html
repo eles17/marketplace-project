@@ -1,4 +1,5 @@
 <h2>Add New Listing</h2>
+
 <form (ngSubmit)="createListing()">
   <label>Title:</label>
   <input type="text" [(ngModel)]="listing.title" name="title" required>
@@ -9,15 +10,19 @@
   <label>Price:</label>
   <input type="number" [(ngModel)]="listing.price" name="price" required>
 
+  <!-- Main Category Dropdown -->
   <label>Main Category:</label>
-<select [(ngModel)]="selectedMainCategory" name="mainCategory" (change)="updateSubcategories()" required>
-  <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-</select>
+  <select [(ngModel)]="selectedMainCategory" name="mainCategory" (change)="updateSubcategories()" required>
+    <option value="" disabled selected>Select Main Category</option>
+    <option *ngFor="let category of mainCategories" [value]="category.id">{{ category.name }}</option>
+  </select>
 
-<label>Subcategory:</label>
-<select [(ngModel)]="listing.category" name="subcategory" required>
-  <option *ngFor="let sub of subcategories" [value]="sub.id">{{ sub.name }}</option>
-</select>
+  <!-- Subcategory Dropdown (Disabled until Main Category is selected) -->
+  <label>Subcategory:</label>
+  <select [(ngModel)]="listing.category" name="subcategory" required [disabled]="!subcategories.length">
+    <option value="" disabled selected>Select Subcategory</option>
+    <option *ngFor="let sub of subcategories" [value]="sub.id">{{ sub.name }}</option>
+  </select>
 
   <label>Upload Image:</label>
   <input type="file" (change)="onFileSelected($event)" required>

@@ -18,12 +18,16 @@ export class ListingsService {
   }
 
   // Fetch all public listings (FOR NORMAL USERS)
-  getAllPublicListings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
-  }
-
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`, { headers: this.getAuthHeaders() });
+  }
+  
+  getSubcategories(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/subcategories`, { headers: this.getAuthHeaders() });
+  }
+  
+  getAllPublicListings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
   }
 
   getProducts(): Observable<any[]> {

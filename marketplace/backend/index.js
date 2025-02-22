@@ -13,7 +13,9 @@ const nodemailer = require('nodemailer'); // import nodemailer for emial notific
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const errorHandler = require("./middleware/errorHandler");
-
+const listingsRoutes = require('./routes/listingsRoutes');
+const mainCategoryRoutes = require('./routes/categories/mainCategoryRoutes');
+const subCategoryRoutes = require('./routes/categories/subCategoryRoutes');
 
 
 const app = express();
@@ -142,6 +144,13 @@ app.get('/api/protected', authMiddleware, (req, res) => {
     })
 });
 
+
+
+app.use('/api/categories', mainCategoryRoutes);
+
+app.use('/api/subcategories', subCategoryRoutes);
+
+app.use('/api', listingsRoutes);
 
 app.use('/api/marketplace', marketplaceRoutes);
 
