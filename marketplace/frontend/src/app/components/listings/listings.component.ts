@@ -10,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./listings.component.scss']
 })
 export class ListingsComponent implements OnInit {
-  listings: any[] = []; // Store listings data
+  listings: any[] = []; // Store all listings
   categories: any[] = []; // Store main categories
   subcategories: any[] = []; // Store subcategories dynamically
   userId: number | null = null; // Store logged-in user ID
@@ -66,8 +66,9 @@ export class ListingsComponent implements OnInit {
       formData.append("image", this.selectedFile);
     }
 
-    this.listingsService.createListing(formData).subscribe({
-      next: (response) => {
+    const type = this.getListingType();
+    this.listingsService.createListing(formData, type).subscribe({
+      next: () => {
         alert("Listing created successfully!");
         this.router.navigate(['/listings']);
       },
@@ -78,46 +79,23 @@ export class ListingsComponent implements OnInit {
     });
   }
 
-  updateSubcategories(): void {
-    if (!this.selectedMainCategory) {
-      this.subcategories = []; // Reset subcategories when no main category is selected
-      this.selectedSubCategory = null;
-      return;
+  getListingType(): string {
+    switch (this.selectedMainCategory) {
+      case 1:
+        return 'products';
+      case 2:
+        return 'vehicles';
+      case 3:
+        return 'real-estate';
+      default:
+        return 'products';
     }
-
-    const selectedCategory = this.categories.find(cat => cat.id === this.selectedMainCategory);
-    this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
-  }
-
-  onMainCategoryChange(): void {
-    if (!this.selectedMainCategory) {
-      this.subcategories = [];
-      this.selectedSubCategory = null;
-      return;
-    }
-
-    const selectedCategory = this.categories.find(cat => cat.id == this.selectedMainCategory);
-    this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
-    this.selectedSubCategory = null;
   }
 
   fetchListings(): void {
-    const filters: any = {
-      category: this.selectedMainCategory ? this.selectedMainCategory.toString() : undefined,
-      subcategory: this.selectedSubCategory ? this.selectedSubCategory.toString() : undefined,
-      min_price: this.minPrice !== null ? this.minPrice : undefined,
-      max_price: this.maxPrice !== null ? this.maxPrice : undefined,
-      search: this.searchQuery.trim() !== '' ? this.searchQuery : undefined,
-      sort: this.sortOption || 'newest'
-    };
-
-    this.listingsService.getListings(filters).subscribe({
-      next: (data: any[]) => {
-        this.listings = data;
-      },
-      error: (err: any) => {
-        console.error('Error fetching listings:', err);
-      }
+    this.listingsService.getAllPublicListings().subscribe({
+      next: (data) => { this.listings = data; },
+      error: (err) => console.error('Error fetching listings:', err)
     });
   }
 
@@ -140,17 +118,20 @@ export class ListingsComponent implements OnInit {
   }
 
   editListing(id: number): void {
-    this.router.navigate([`/edit-listing/${id}`]);
+    this.router.navigate([`/listings/edit/${id}`]);
   }
 
-  deleteListing(id: number): void {
-    if (confirm("Are you sure you want to delete this listing?")) {
-      this.listingsService.deleteListing(id).subscribe(
+  deleteListing(id: number, type: string): void {
+    if (confirm(`Are you sure you want to delete this ${type}?`)) {
+      this.listingsService.deleteListing(id, type).subscribe(
         () => {
           this.listings = this.listings.filter(listing => listing.id !== id);
           alert("Listing deleted successfully!");
         },
-        (error) => console.error("Error deleting listing:", error)
+        (error) => {
+          console.error(`Error deleting ${type}:`, error);
+          alert(`Error deleting ${type}.`);
+        }
       );
     }
   }

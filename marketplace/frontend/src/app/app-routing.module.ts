@@ -19,10 +19,9 @@ const routes: Routes = [
   { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] }, 
   { path: 'dashboard', component: DashboardComponent },
   { path: 'listings', component: ListingsComponent},
-  { path: 'listings/add-listing', component: AddListingComponent},
-  { path: 'listings/:id', component: ListingDetailsComponent },
-  { path: 'edit-listing/:id', component: EditListingComponent, canActivate: [AuthGuard] }, // Ensure only logged-in users can access
-  { path: 'add-listing', component: AddListingComponent, canActivate: [AuthGuard] },
+  { path: 'listings/:id', component: ListingDetailsComponent, pathMatch: 'full' },
+{ path: 'listings/add-listing', component: AddListingComponent },
+{ path: 'listings/edit/:id', component: EditListingComponent },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' }, // redirects to login
   { path: '**', redirectTo: '/auth/login' }  // Handles unknown routes
 ];

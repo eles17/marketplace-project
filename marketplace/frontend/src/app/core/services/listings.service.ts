@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -9,81 +9,73 @@ import { AuthService } from './auth.service';
 })
 export class ListingsService {
   private apiUrl = `${environment.apiUrl}`;
- 
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    if (!token) {
-        console.error("No token found! Authorization header will be empty.");
-        return new HttpHeaders();
-    }
-    console.log("Using Token for API Call:", token);  // Debugging log
-    return new HttpHeaders({
-        'Authorization': `Bearer ${token}`
-    });
-}
+    return token ? new HttpHeaders({ 'Authorization': `Bearer ${token}` }) : new HttpHeaders();
+  }
+
+  // Fetch all public listings (FOR NORMAL USERS)
+  getAllPublicListings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
+  }
 
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`, { headers: this.getAuthHeaders() });
   }
 
-  getListings(filters: any = {}): Observable<any[]> {
-    let queryParams = new URLSearchParams();
-
-    Object.keys(filters).forEach(key => {
-        if (filters[key]) {
-            if (key === 'category') {
-                queryParams.append(key, String(parseInt(filters[key]))); 
-            } else {
-                queryParams.append(key, filters[key]);
-            }
-        }
-    });
-
-    return this.http.get<any[]>(`${this.apiUrl}/listings?${queryParams.toString()}`, { headers: this.getAuthHeaders() });
-}
-
-  getListingById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });
+  getProducts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/products`, { headers: this.getAuthHeaders() });
   }
 
-  createListing(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/listings`, formData, { headers: this.getAuthHeaders() });
+  getVehicles(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/vehicles`, { headers: this.getAuthHeaders() });
   }
 
-  deleteListing(id: number): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/listings/${id}`, { headers: this.getAuthHeaders() });
+  getRealEstate(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/real-estate`, { headers: this.getAuthHeaders() });
   }
 
-  updateListing(id: number, updatedListing: any): Observable<any> {
-    return this.http.patch<any>(`${this.apiUrl}/listings/${id}`, updatedListing, { headers: this.getAuthHeaders() });
+  getListingById(id: number, type: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${type}/${id}`, { headers: this.getAuthHeaders() });
   }
 
+  createListing(formData: FormData, type: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${type}`, formData, { headers: this.getAuthHeaders() });
+  }
 
-  //user management (Admin)
+  deleteListing(id: number, type: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${type}/${id}`, { headers: this.getAuthHeaders() });
+  }
+
+  updateListing(id: number, updatedListing: FormData, type: string): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${type}/${id}`, updatedListing, { headers: this.getAuthHeaders() });
+  }
+
+  // Admin Functions
   getUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
+    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
   }
 
   getAllListings(): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
+    return this.http.get<any[]>(`${this.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
   }
-  
+
   banUser(userId: number): Observable<any> {
-    return this.http.put(`/api/admin/users/${userId}/ban`, {}, { headers: this.getAuthHeaders() });
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/ban`, {}, { headers: this.getAuthHeaders() });
   }
-  
+
   unbanUser(userId: number): Observable<any> {
-    return this.http.put(`/api/admin/users/${userId}/unban`, {}, { headers: this.getAuthHeaders() });
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/unban`, {}, { headers: this.getAuthHeaders() });
   }
-  
+
   deleteUser(userId: number): Observable<any> {
-    return this.http.delete(`/api/admin/users/${userId}`, { headers: this.getAuthHeaders() });
+    return this.http.delete(`${this.apiUrl}/admin/users/${userId}`, { headers: this.getAuthHeaders() });
   }
-  
-  deleteListingAsAdmin(listingId: number): Observable<any> {
-    return this.http.delete(`/api/admin/listings/${listingId}`, { headers: this.getAuthHeaders() });
+
+  deleteListingAsAdmin(listingId: number, type: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/admin/${type}/${listingId}`, { headers: this.getAuthHeaders() });
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ListingsService } from '../../core/services/listings.service'; // Assuming the service is used for both listings and users
+import { ListingsService } from '../../core/services/listings.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -10,15 +10,11 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./admin-panel.component.scss']
 })
 export class AdminPanelComponent implements OnInit {
-  users: any[] = []; // Store users data
+  users: any[] = [];
   listings: any[] = [];
-  isLoading = false; //loading state
+  isLoading = false;
 
-  constructor(
-    private listingsService: ListingsService,
-    private router: Router,
-    private authService: AuthService
-  ) {}
+  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.fetchUsers();
@@ -40,16 +36,18 @@ export class AdminPanelComponent implements OnInit {
   }
 
   fetchListings(): void {
+    this.isLoading = true;
     this.listingsService.getAllListings().subscribe({
-      next: (data: any[]) => {
+      next: (data) => {
         this.listings = data;
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error fetching listings:', err);
+        this.isLoading = false;
       }
     });
   }
-
 
   banUser(id: number): void {
     this.listingsService.banUser(id).subscribe({
@@ -62,9 +60,9 @@ export class AdminPanelComponent implements OnInit {
         alert('Failed to ban user.');
       }
     });
-}
+  }
 
-unbanUser(id: number): void {
+  unbanUser(id: number): void {
     this.listingsService.unbanUser(id).subscribe({
       next: () => {
         alert('User unbanned successfully!');
@@ -75,33 +73,33 @@ unbanUser(id: number): void {
         alert('Failed to unban user.');
       }
     });
-}
-
-deleteUser(id: number): void {
-  if (confirm('Are you sure you want to delete this user?')) {
-    this.listingsService.deleteUser(id).subscribe({
-      next: () => {
-        alert('User deleted successfully!');
-        this.fetchUsers();
-      },
-      error: (err) => {
-        console.error('Error deleting user:', err);
-        alert('Error deleting user.');
-      }
-    });
   }
-}
 
-deleteListing(id: number): void {
-    if (confirm('Are you sure you want to delete this listing?')) {
-      this.listingsService.deleteListingAsAdmin(id).subscribe({
+  deleteUser(id: number): void {
+    if (confirm('Are you sure you want to delete this user?')) {
+      this.listingsService.deleteUser(id).subscribe({
         next: () => {
-          alert('Listing deleted successfully!');
+          alert('User deleted successfully!');
+          this.fetchUsers();
+        },
+        error: (err) => {
+          console.error('Error deleting user:', err);
+          alert('Error deleting user.');
+        }
+      });
+    }
+  }
+
+  deleteListing(id: number, type: string): void {
+    if (confirm(`Are you sure you want to delete this ${type}?`)) {
+      this.listingsService.deleteListingAsAdmin(id, type).subscribe({
+        next: () => {
+          alert(`${type} deleted successfully!`);
           this.fetchListings();
         },
         error: (err) => {
-          console.error('Error deleting listing:', err);
-          alert('Error deleting listing.');
+          console.error(`Error deleting ${type}:`, err);
+          alert(`Error deleting ${type}.`);
         }
       });
     }

@@ -14,15 +14,15 @@ export class AddListingComponent implements OnInit {
   listing = {
     title: '',
     description: '',
-    price: null as number | null, // Ensuring null is handled correctly
-    category: null as number | null, // Ensure category is treated as a number
+    price: null as number | null, // Ensure price can be null
+    category: null as number | null // Ensure category is treated as a number
   };
-  
+
   categories: { id: number; name: string; subcategories: { id: number; name: string }[] }[] = [];
   subcategories: { id: number; name: string }[] = [];
   selectedMainCategory: number | null = null;
   selectedFile: File | null = null;
-  errorMessage: string = ''; // Store any errors
+  errorMessage: string = ''; // Store error messages
 
   constructor(private listingsService: ListingsService, private http: HttpClient, private router: Router) {}
 
@@ -33,33 +33,23 @@ export class AddListingComponent implements OnInit {
   loadCategories(): void {
     this.http.get<{ id: number; name: string; subcategories: { id: number; name: string }[] }[]>(
       `${environment.apiUrl}/marketplace/categories`
-    ).subscribe(
-      (data) => {
+    ).subscribe({
+      next: (data) => {
         this.categories = data.filter(cat => cat.subcategories && cat.subcategories.length > 0); // Ensure only main categories are shown
       },
-      (error) => {
+      error: (error) => {
         console.error('Error fetching categories:', error);
         this.errorMessage = "Failed to load categories.";
       }
-    );
+    });
   }
 
   updateSubcategories(): void {
-    console.log("Selected Main Category ID:", this.selectedMainCategory);
-  
     if (this.selectedMainCategory) {
-      const selectedCategory = this.categories.find(cat => cat.id === Number(this.selectedMainCategory));
-  
-      if (selectedCategory?.subcategories?.length) {
-        this.subcategories = selectedCategory.subcategories;
-        console.log("Loaded Subcategories:", this.subcategories);
-      } else {
-        this.subcategories = [];
-        console.log("No subcategories found.");
-      }
+      const selectedCategory = this.categories.find(cat => cat.id === this.selectedMainCategory);
+      this.subcategories = selectedCategory?.subcategories || [];
     } else {
       this.subcategories = [];
-      console.log("Main category not selected.");
     }
   }
 
@@ -76,34 +66,24 @@ export class AddListingComponent implements OnInit {
   }
 
   createListing(): void {
-    if (!this.listing.title || !this.listing.description || !this.listing.price || !this.listing.category) {
-      alert('All fields are required');
+    if (!this.isValidListing()) {
+      alert("Please fill in all required fields.");
       return;
     }
-  
-    const formData = new FormData();
-    formData.append('title', this.listing.title);
-    formData.append('description', this.listing.description);
-    formData.append('price', this.listing.price?.toString() || '0');
-    formData.append('category', this.listing.category?.toString() || '');
-  
-    if (this.selectedFile) {
-      formData.append('image', this.selectedFile);
-    }
-  
-    this.listingsService.createListing(formData).subscribe(
-      (response) => {
-        console.log('Listing created successfully:', response);
+
+    const formData = this.prepareFormData();
+    const type = this.getListingType();
+
+    this.listingsService.createListing(formData, type).subscribe({
+      next: () => {
         alert("Listing successfully created!");
-  
-        // Redirect user to the listing details page after successful creation
-        this.router.navigate(['/listings', response.listing.id]); 
+        this.router.navigate(['/listings']);
       },
-      (error) => {
-        console.error('Error creating listing:', error);
+      error: (err) => {
+        console.error("Error creating listing:", err);
         alert("Error creating listing.");
       }
-    );
+    });
   }
 
   resetForm(): void {
@@ -111,5 +91,38 @@ export class AddListingComponent implements OnInit {
     this.selectedFile = null;
     this.selectedMainCategory = null;
     this.subcategories = [];
+  }
+
+  isValidListing(): boolean {
+    return !!(this.listing.title && this.listing.description && 
+              this.listing.price && !isNaN(this.listing.price) &&
+              this.selectedMainCategory);
+  }
+
+  prepareFormData(): FormData {
+    const formData = new FormData();
+    formData.append("title", this.listing.title);
+    formData.append("description", this.listing.description);
+    formData.append("price", this.listing.price!.toString());
+    formData.append("category", this.selectedMainCategory!.toString());
+
+    if (this.selectedFile) {
+      formData.append("image", this.selectedFile);
+    }
+
+    return formData;
+  }
+
+  getListingType(): string {
+    switch (this.selectedMainCategory) {
+      case 1:
+        return 'products';
+      case 2:
+        return 'vehicles';
+      case 3:
+        return 'real-estate';
+      default:
+        return 'products';
+    }
   }
 }
