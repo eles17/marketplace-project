@@ -20,7 +20,7 @@ const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent },
   
 
-  { path: 'listings/add-listing', component: AddListingComponent }, 
+  { path: 'listings/add-listing', component: AddListingComponent },
   { path: 'listings/:id', component: ListingDetailsComponent, pathMatch: 'full' },
 
   { path: 'listings', component: ListingsComponent },

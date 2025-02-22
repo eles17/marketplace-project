@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../core/services/listings.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AdminService } from '../../core/services/admin.service';
 
 @Component({
   selector: 'app-listings',
@@ -29,7 +30,7 @@ export class ListingsComponent implements OnInit {
     price: null
   };
 
-  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {}
+  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService, private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.userId = this.authService.getUserId();
@@ -66,7 +67,7 @@ export class ListingsComponent implements OnInit {
       formData.append("image", this.selectedFile);
     }
 
-    const type = this.getListingType();
+    const type = this.getListingType(this.selectedMainCategory);
     this.listingsService.createListing(formData, type).subscribe({
       next: () => {
         alert("Listing created successfully!");
@@ -79,16 +80,12 @@ export class ListingsComponent implements OnInit {
     });
   }
 
-  getListingType(): string {
-    switch (this.selectedMainCategory) {
-      case 1:
-        return 'products';
-      case 2:
-        return 'vehicles';
-      case 3:
-        return 'real-estate';
-      default:
-        return 'products';
+  getListingType(categoryId: number): string {
+    switch (categoryId) {
+      case 1: return 'products';
+      case 2: return 'vehicles';
+      case 3: return 'real-estate';
+      default: return 'products';
     }
   }
 
@@ -133,14 +130,15 @@ export class ListingsComponent implements OnInit {
     this.selectedSubCategory = null;
   }
   
-  deleteListing(id: number, type: string): void {
+  deleteListing(id: number, categoryId: number): void {
+    const type = this.getListingType(categoryId);
     if (confirm(`Are you sure you want to delete this ${type}?`)) {
-      this.listingsService.deleteListing(id, type).subscribe({
+      this.adminService.deleteListingAsAdmin(id, type).subscribe({
         next: () => {
           alert(`${type} deleted successfully!`);
           this.fetchListings();
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error(`Error deleting ${type}:`, err);
           alert(`Error deleting ${type}.`);
         }

@@ -32,9 +32,7 @@ export class AddListingComponent implements OnInit {
 
   constructor(private listingsService: ListingsService, private http: HttpClient, private router: Router) {}
 
-  ngOnInit(): void {
-    this.loadSubcategories(); // Load all subcategories from backend
-  }
+  ngOnInit(): void {}
 
   loadSubcategories(): void {
     this.http.get<{ id: number; name: string; main_category_id: number }[]>(
@@ -53,8 +51,15 @@ export class AddListingComponent implements OnInit {
 
   updateSubcategories(): void {
     if (this.selectedMainCategory) {
-      // Filter only subcategories belonging to the selected main category
-      this.subcategories = this.subcategories.filter(sub => sub.main_category_id === this.selectedMainCategory);
+      this.listingsService.getSubcategories(this.selectedMainCategory).subscribe({
+        next: (data) => {
+          this.subcategories = data;
+        },
+        error: (error) => {
+          console.error('Error fetching subcategories:', error);
+          this.errorMessage = "Failed to load subcategories.";
+        }
+      });
     } else {
       this.subcategories = [];
     }

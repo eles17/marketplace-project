@@ -21,11 +21,12 @@ export class ListingsService {
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`, { headers: this.getAuthHeaders() });
   }
-  
-  getSubcategories(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/subcategories`, { headers: this.getAuthHeaders() });
+
+  // Updated: Requires main category ID now**
+  getSubcategories(mainCategoryId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/categories/${mainCategoryId}/subcategories`, { headers: this.getAuthHeaders() });
   }
-  
+
   getAllPublicListings(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
   }
