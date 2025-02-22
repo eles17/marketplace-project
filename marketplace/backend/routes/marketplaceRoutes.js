@@ -24,54 +24,22 @@ const router = express.Router();
 // Fetch all listings with filtering
 router.get('/listings', async (req, res) => {
     try {
-        let query = `
-            SELECT id, title, description, price, category, subcategory, created_at, user_id, image_url 
-            FROM listings 
-            WHERE 1=1`;
+        const productsQuery = `
+            SELECT id, name AS title, description, price, category_id AS category, NULL AS subcategory, created_at, user_id, image_url, 'Product' AS type 
+            FROM products`;
 
-        let queryParams = [];
+        const vehiclesQuery = `
+            SELECT id, name AS title, description, price, category_id AS category, NULL AS subcategory, created_at, user_id, NULL AS image_url, 'Vehicle' AS type 
+            FROM vehicles`;
 
-        // Apply Main Category Filter
-        if (req.query.category && !isNaN(parseInt(req.query.category))) {
-            query += ` AND category = $${queryParams.length + 1}`;
-            queryParams.push(parseInt(req.query.category));
-        }
+        const realEstateQuery = `
+            SELECT id, name AS title, description, price_per_month AS price, category_id AS category, NULL AS subcategory, created_at, user_id, NULL AS image_url, 'RealEstate' AS type 
+            FROM real_estate`;
 
-        // Apply Subcategory Filter
-        if (req.query.subcategory && !isNaN(parseInt(req.query.subcategory))) {
-            query += ` AND subcategory = $${queryParams.length + 1}`;
-            queryParams.push(parseInt(req.query.subcategory));
-        }
+        const query = `${productsQuery} UNION ALL ${vehiclesQuery} UNION ALL ${realEstateQuery} ORDER BY created_at DESC`;
 
-        // Apply Min Price Filter
-        if (req.query.min_price) {
-            query += ` AND price >= $${queryParams.length + 1}`;
-            queryParams.push(parseFloat(req.query.min_price));
-        }
-
-        // Apply Max Price Filter
-        if (req.query.max_price) {
-            query += ` AND price <= $${queryParams.length + 1}`;
-            queryParams.push(parseFloat(req.query.max_price));
-        }
-
-        // Apply Search Query (title or description)
-        if (req.query.search) {
-            query += ` AND (title ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 2})`;
-            queryParams.push(`%${req.query.search}%`, `%${req.query.search}%`);
-        }
-
-        // Apply Sorting
-        if (req.query.sort === 'lowest_price') {
-            query += ` ORDER BY price ASC`;
-        } else if (req.query.sort === 'highest_price') {
-            query += ` ORDER BY price DESC`;
-        } else {
-            query += ` ORDER BY created_at DESC`;
-        }
-
-        const result = await pool.query(query, queryParams);
-        res.json(result.rows);
+        const listings = await pool.query(query);
+        res.json(listings.rows);
     } catch (error) {
         console.error("Error fetching listings with filters:", error);
         res.status(500).json({ error: "Server error fetching listings" });

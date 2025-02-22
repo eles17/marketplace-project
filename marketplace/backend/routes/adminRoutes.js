@@ -85,28 +85,28 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res,next)
 });
 
 
-// GET ALL LISTINGS --> Admins only
-router.get('/listings', authMiddleware, adminMiddleware, async(req, res, next) => {    
+// GET ALL PRODUCT --> Admins only
+router.get('/products', authMiddleware, adminMiddleware, async(req, res, next) => {    
     try{
-    const listings = await pool.query("SELECT id, name, price, category_id, created_at FROM products ORDER BY created_at DESC");
-    res.json(listings.rows);
-}catch (err){
+        const products = await pool.query("SELECT id, name, price, category_id, created_at FROM products ORDER BY created_at DESC");
+        res.json(products.rows);
+    }catch (err){
         next(err);
     }
 });
 
 // DELETE a listing
-router.delete('/listings/:id', authMiddleware, adminMiddleware, async(req,res, next) =>{
+router.delete('/products/:id', authMiddleware, adminMiddleware, async(req,res, next) =>{
     const {id} = req.params;
 
     try{
         const result = await pool.query("DELETE FROM products WHERE id = $1 RETURNING id", [id]);
 
         if (result.rowCount === 0) {
-            return next({ statusCode: 404, message: "User not found." });
+            return next({ statusCode: 404, message: "Product not found." });
         }
 
-        res.json({ message: "Listing deleted successfully." });
+        res.json({ message: "Product deleted successfully." });
     } catch (err) {
         next(err);
     }

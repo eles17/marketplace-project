@@ -15,8 +15,14 @@ export class ListingsService {
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
-    console.log("Using Token for API Call:", token); // Debugging
-    return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    if (!token) {
+        console.error("No token found! Authorization header will be empty.");
+        return new HttpHeaders();
+    }
+    console.log("Using Token for API Call:", token);  // Debugging log
+    return new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+    });
 }
 
   getCategories(): Observable<any[]> {
@@ -58,11 +64,11 @@ export class ListingsService {
 
   //user management (Admin)
   getUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
+    return this.http.get<any[]>(`${environment.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
   }
 
   getAllListings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
+    return this.http.get<any[]>(`${environment.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
   }
   
   banUser(userId: number): Observable<any> {
