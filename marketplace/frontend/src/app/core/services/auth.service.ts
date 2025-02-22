@@ -24,10 +24,17 @@ export class AuthService {
           localStorage.setItem(this.tokenKey, response.token);
           localStorage.setItem(this.userKey, JSON.stringify(response.user));
           this.router.navigate(['/dashboard']); // Redirect after login
+
+          // Redirect to Admin Panel if user is admin
+          if (response.user.is_admin) {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
         }
       })
     );
-  }
+}
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
