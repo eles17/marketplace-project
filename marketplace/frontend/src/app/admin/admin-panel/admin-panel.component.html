@@ -1,5 +1,9 @@
 <h2>Admin Panel</h2>
-<table>
+
+<!-- Show loading spinner -->
+<div *ngIf="isLoading">Loading users...</div>
+
+<table *ngIf="!isLoading">
   <thead>
     <tr>
       <th>ID</th>
@@ -14,10 +18,10 @@
       <td>{{ user.id }}</td>
       <td>{{ user.name }}</td>
       <td>{{ user.email }}</td>
-      <td>{{ user.status }}</td>
+      <td>{{ user.is_banned ? 'Banned' : 'Active' }}</td>
       <td>
-        <button (click)="banUser(user.id)" *ngIf="user.status !== 'banned'">Ban</button>
-        <button (click)="unbanUser(user.id)" *ngIf="user.status === 'banned'">Unban</button>
+        <button (click)="banUser(user.id)" *ngIf="!user.is_banned">Ban</button>
+        <button (click)="unbanUser(user.id)" *ngIf="user.is_banned">Unban</button>
         <button (click)="deleteUser(user.id)">Delete</button>
       </td>
     </tr>

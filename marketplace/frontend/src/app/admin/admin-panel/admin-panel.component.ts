@@ -11,6 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AdminPanelComponent implements OnInit {
   users: any[] = []; // Store users data
+  isLoading = false; //loading state
 
   constructor(
     private listingsService: ListingsService,
@@ -23,12 +24,15 @@ export class AdminPanelComponent implements OnInit {
   }
 
   fetchUsers(): void {
+    this.isLoading = true;
     this.listingsService.getUsers().subscribe({
       next: (data: any[]) => {
         this.users = data;
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error fetching users:', err);
+        this.isLoading = false;
       }
     });
   }
@@ -59,18 +63,18 @@ unbanUser(id: number): void {
     });
 }
 
-  deleteUser(id: number): void {
-    if (confirm('Are you sure you want to delete this user?')) {
-      this.listingsService.deleteUser(id).subscribe(
-        () => {
-          alert('User deleted successfully!');
-          this.fetchUsers(); // Refresh the list
-        },
-        (err) => {
-          console.error('Error deleting user:', err);
-          alert('Error deleting user.');
-        }
-      );
-    }
+deleteUser(id: number): void {
+  if (confirm('Are you sure you want to delete this user?')) {
+    this.listingsService.deleteUser(id).subscribe({
+      next: () => {
+        alert('User deleted successfully!');
+        this.fetchUsers(); 
+      },
+      error: (err) => {
+        console.error('Error deleting user:', err);
+        alert('Error deleting user.');
+      }
+    });
   }
+}
 }
