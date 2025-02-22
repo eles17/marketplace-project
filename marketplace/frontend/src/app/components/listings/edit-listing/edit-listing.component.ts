@@ -22,30 +22,30 @@ export class EditListingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.userId = this.authService.getUserId(); // Get logged-in user ID
     const listingId = Number(this.route.snapshot.paramMap.get('id'));
-    this.listingsService.getListingById(listingId).subscribe({
-      next: (data: any) => {
-        if (data.user_id !== this.userId) {
-          alert("Unauthorized: You can only edit your own listings.");
-          this.router.navigate(['/listings']);
-        }
+    const listingType = this.route.snapshot.queryParamMap.get('type') || 'products';
+  
+    this.listingsService.getListingById(listingId, listingType).subscribe({
+      next: (data) => {
         this.listing = data;
       },
-      error: (err: any) => {
-        console.error('Error fetching listing details:', err);
+      error: (err) => {
+        console.error('Error fetching listing:', err);
       }
     });
   }
-
+  
   updateListing(): void {
-    this.listingsService.updateListing(this.listing.id, this.listing).subscribe(
-      () => {
+    const listingType = this.listing.type || 'products';
+    
+    this.listingsService.updateListing(this.listing.id, this.listing, listingType).subscribe({
+      next: () => {
         alert("Listing updated successfully!");
-        this.router.navigate([`/listings/${this.listing.id}`]); // Redirect after update
       },
-      (error) => console.error("Error updating listing:", error)
-    );
+      error: (err) => {
+        console.error("Error updating listing:", err);
+      }
+    });
   }
 
   // Public method for cancel button

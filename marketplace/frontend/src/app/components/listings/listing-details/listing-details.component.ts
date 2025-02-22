@@ -25,10 +25,6 @@ export class ListingDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.userId = this.authService.getUserId();
-    this.loadListingDetails();
-  }
-
-  loadListingDetails(): void {
     const listingId = Number(this.route.snapshot.paramMap.get('id'));
     const listingType = this.route.snapshot.queryParamMap.get('type') || 'products';
 
@@ -44,23 +40,42 @@ export class ListingDetailsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Error fetching listing details:', err);
         this.errorMessage = 'Error fetching listing details.';
+        console.error('Error fetching listing details:', err);
         this.isLoading = false;
       }
     });
   }
 
+  // **Fix: Add missing editListing() method**
   editListing(): void {
-    if (!this.isValidListing()) {
+    this.router.navigate([`/listings/edit/${this.listing.id}`], {
+      queryParams: { type: this.listing.type }
+    });
+  }
+
+  updateListing(): void {
+    if (!this.listing.title || !this.listing.description || !this.listing.price || isNaN(this.listing.price) || !this.listing.category) {
       alert("Please fill in all required fields correctly.");
       return;
     }
 
-    const formData = this.prepareFormData();
-    const type = this.getListingType();
+    const category = parseInt(this.listing.category, 10);
+    const subcategory = this.listing.subcategory ? parseInt(this.listing.subcategory, 10) : null;
+    const listingType = this.listing.type || 'products';
 
-    this.listingsService.updateListing(this.listing.id, formData, type).subscribe({
+    const formData = new FormData();
+    formData.append("title", this.listing.title);
+    formData.append("description", this.listing.description);
+    formData.append("price", this.listing.price.toString());
+    formData.append("category", category.toString());
+    formData.append("subcategory", subcategory ? subcategory.toString() : "");
+
+    if (this.selectedFile) {
+      formData.append("image", this.selectedFile);
+    }
+
+    this.listingsService.updateListing(this.listing.id, formData, listingType).subscribe({
       next: () => {
         alert("Listing updated successfully!");
         this.router.navigate(['/listings']);
@@ -72,27 +87,25 @@ export class ListingDetailsComponent implements OnInit {
     });
   }
 
-  deleteListing(): void {
-    if (confirm("Are you sure you want to delete this listing?")) {
-      const type = this.getListingType();
-      
-      this.listingsService.deleteListing(this.listing.id, type).subscribe({
+  deleteListing(id: number, type: string): void {
+    if (confirm(`Are you sure you want to delete this ${type}?`)) {
+      this.listingsService.deleteListing(id, type).subscribe({
         next: () => {
-          alert("Listing deleted successfully!");
+          alert(`${type} deleted successfully!`);
           this.router.navigate(['/listings']);
         },
         error: (err) => {
-          console.error("Error deleting listing:", err);
-          alert("Error deleting listing.");
+          console.error(`Error deleting ${type}:`, err);
+          alert(`Error deleting ${type}.`);
         }
       });
     }
   }
 
   isValidListing(): boolean {
-    return !!(this.listing.title && this.listing.description && 
-              this.listing.price && !isNaN(this.listing.price) &&
-              this.listing.category);
+    return !!(this.listing.title && this.listing.description &&
+      this.listing.price && !isNaN(this.listing.price) &&
+      this.listing.category);
   }
 
   prepareFormData(): FormData {

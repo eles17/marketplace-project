@@ -121,18 +121,30 @@ export class ListingsComponent implements OnInit {
     this.router.navigate([`/listings/edit/${id}`]);
   }
 
+  onMainCategoryChange(): void {
+    if (!this.selectedMainCategory) {
+      this.subcategories = [];
+      this.selectedSubCategory = null;
+      return;
+    }
+  
+    const selectedCategory = this.categories.find(cat => cat.id == this.selectedMainCategory);
+    this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
+    this.selectedSubCategory = null;
+  }
+  
   deleteListing(id: number, type: string): void {
     if (confirm(`Are you sure you want to delete this ${type}?`)) {
-      this.listingsService.deleteListing(id, type).subscribe(
-        () => {
-          this.listings = this.listings.filter(listing => listing.id !== id);
-          alert("Listing deleted successfully!");
+      this.listingsService.deleteListing(id, type).subscribe({
+        next: () => {
+          alert(`${type} deleted successfully!`);
+          this.fetchListings();
         },
-        (error) => {
-          console.error(`Error deleting ${type}:`, error);
+        error: (err) => {
+          console.error(`Error deleting ${type}:`, err);
           alert(`Error deleting ${type}.`);
         }
-      );
+      });
     }
   }
 }

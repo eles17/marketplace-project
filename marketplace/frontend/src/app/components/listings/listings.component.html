@@ -54,7 +54,7 @@
 
       <div *ngIf="listing.user_id === userId">
         <button (click)="editListing(listing.id)">Edit</button>
-        <button (click)="deleteListing(listing.id)">Delete</button>
+        <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
       </div>
 
       <hr />

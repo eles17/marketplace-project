@@ -49,7 +49,7 @@
       <td>{{ listing.price | currency }}</td>
       <td>{{ listing.category_id }}</td>
       <td>
-        <button (click)="deleteListing(listing.id)">Delete</button>
+        <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
       </td>
     </tr>
   </tbody>

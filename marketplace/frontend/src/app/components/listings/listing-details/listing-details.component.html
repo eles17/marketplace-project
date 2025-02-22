@@ -9,7 +9,7 @@
 
   <div *ngIf="listing?.user_id === userId">
     <button (click)="editListing()">Edit</button>
-    <button (click)="deleteListing()">Delete</button>
+    <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
   </div>
 
   <button routerLink="/listings">Back to Listings</button>
