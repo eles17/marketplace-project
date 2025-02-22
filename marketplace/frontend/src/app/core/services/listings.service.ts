@@ -8,15 +8,16 @@ import { AuthService } from './auth.service';
   providedIn: 'root'
 })
 export class ListingsService {
-  private apiUrl = `${environment.apiUrl}/marketplace`;
+  private apiUrl = `${environment.apiUrl}`;
  
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
+    console.log("Using Token for API Call:", token); // Debugging
     return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  }
+}
 
   getCategories(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/categories`, { headers: this.getAuthHeaders() });
@@ -57,7 +58,11 @@ export class ListingsService {
 
   //user management (Admin)
   getUsers(): Observable<any[]> {
-    return this.http.get<any[]>('/api/admin/users', { headers: this.getAuthHeaders() });
+    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
+  }
+
+  getAllListings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
   }
   
   banUser(userId: number): Observable<any> {
@@ -70,10 +75,6 @@ export class ListingsService {
   
   deleteUser(userId: number): Observable<any> {
     return this.http.delete(`/api/admin/users/${userId}`, { headers: this.getAuthHeaders() });
-  }
-
-  getAllListings(): Observable<any[]> {
-    return this.http.get<any[]>('/api/admin/listings', { headers: this.getAuthHeaders() });
   }
   
   deleteListingAsAdmin(listingId: number): Observable<any> {
