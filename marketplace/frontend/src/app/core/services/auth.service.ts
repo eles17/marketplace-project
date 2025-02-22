@@ -96,4 +96,8 @@ export class AuthService {
     this.user = user;
     localStorage.setItem('user', JSON.stringify(user));
   }
+
+  register(userData: { full_name: string, email: string, password: string, address: string }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/register`, userData);
+  }
 }

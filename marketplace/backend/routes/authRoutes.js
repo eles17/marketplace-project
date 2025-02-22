@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
+
 require('dotenv').config();
 const rateLimit = require('express-rate-limit');
 
@@ -128,5 +129,32 @@ router.get('/profile', async (req, res, next) => {
         next(err);
     }
 });
+
+router.post('/register', async (req, res) => {
+    try {
+      const { full_name, email, password, address } = req.body;
+  
+      // Check if user exists
+      const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+  
+      // Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+  
+      // Insert user into the database
+      await pool.query(
+        'INSERT INTO users (full_name, email, password_hash, address, is_admin, is_banned) VALUES ($1, $2, $3, $4, $5, $6)',
+        [full_name, email, hashedPassword, address, false, false]
+      );
+  
+      res.status(201).json({ message: 'User registered successfully!' });
+    } catch (error) {
+      console.error('Error registering user:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
 module.exports = router;
