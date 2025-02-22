@@ -17,7 +17,7 @@ router.put('/users/:id/ban', authMiddleware, adminMiddleware, async (req, res) =
             return next({ statusCode: 404, message: "User not found." }); 
         }
 
-        res.json({ message: "User banned successfully.", user: result.rows[0] });
+        res.json({ message: "User banned successfully.", is_banned: true });
     } catch (err) {
         next(err)
     }
@@ -75,10 +75,10 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res) =>{
         const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [id]);
 
         if (result.rowCount === 0){
-            return next({ statusCode: 404, message: "User not found." });
+            return next({ statusCode: 404, message: "Listing not found." });
         }
 
-        res.json({message: "User deleted."});
+        res.json({ message: "Listing deleted successfully." });
     }catch (err){
         next(err);
     }

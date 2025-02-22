@@ -34,30 +34,30 @@ export class AdminPanelComponent implements OnInit {
   }
 
   banUser(id: number): void {
-    this.listingsService.updateUserStatus(id, 'banned').subscribe({
+    this.listingsService.banUser(id).subscribe({
       next: () => {
         alert('User banned successfully!');
-        this.fetchUsers(); // Refresh the list
+        this.fetchUsers();
       },
       error: (err) => {
         console.error('Error banning user:', err);
-        alert('Error banning user.');
+        alert('Failed to ban user.');
       }
     });
-  }
+}
 
-  unbanUser(id: number): void {
-    this.listingsService.updateUserStatus(id, 'active').subscribe({
+unbanUser(id: number): void {
+    this.listingsService.unbanUser(id).subscribe({
       next: () => {
         alert('User unbanned successfully!');
-        this.fetchUsers(); // Refresh the list
+        this.fetchUsers();
       },
       error: (err) => {
         console.error('Error unbanning user:', err);
-        alert('Error unbanning user.');
+        alert('Failed to unban user.');
       }
     });
-  }
+}
 
   deleteUser(id: number): void {
     if (confirm('Are you sure you want to delete this user?')) {

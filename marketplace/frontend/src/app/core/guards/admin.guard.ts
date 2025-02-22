@@ -9,21 +9,11 @@ import { AuthService } from '../services/auth.service'; // Make sure AuthService
 export class AdminGuard implements CanActivate {
   constructor(private authService: AuthService, private router: Router) {}
 
-  canActivate(
-    next: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): Observable<boolean> | Promise<boolean> | boolean {
-    // Log the result of isLoggedIn and isAdmin
-    console.log('isLoggedIn:', this.authService.isLoggedIn());
-    console.log('isAdmin:', this.authService.isAdmin());
-
-    // Check if the user is logged in and is an admin
+  canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
     if (this.authService.isLoggedIn() && this.authService.isAdmin()) {
-      return true;
+        return true;
     }
-
-    // If not an admin, redirect to login or another page
     this.router.navigate(['/auth/login']);
     return false;
-  }
+}
 }

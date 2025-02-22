@@ -62,8 +62,7 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    // Check if user has admin role
-    return this.user && this.user.role === 'admin';
+    return this.user && this.user.is_admin;
   }
 
   // Example of setting a user (you would call this in the login process)
