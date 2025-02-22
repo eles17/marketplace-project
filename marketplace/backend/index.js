@@ -149,8 +149,6 @@ app.use('/api/chat', chatRoutes);
 
 app.use('/api/admin', adminRoutes);
 
-app.use('/api/marketplace', marketplaceRoutes);
-
 app.use('/api/auth', authRoutes);
 
 app.use("/api/", apiLimiter);

@@ -21,27 +21,17 @@ const upload = multer({ storage });
 const cache = new NodeCache({ stdTTL: 600 });
 const router = express.Router();
 
-// Fetch all listings with filtering
+// Fetch all listings (products, vehicles, real estate)
 router.get('/listings', async (req, res) => {
     try {
-        const productsQuery = `
-            SELECT id, name AS title, description, price, category_id AS category, NULL AS subcategory, created_at, user_id, image_url, 'Product' AS type 
-            FROM products`;
+        const products = await pool.query("SELECT id, name AS title, description, price, category_id AS category, created_at, user_id, image_url FROM products");
+        const vehicles = await pool.query("SELECT id, name AS title, description, price, category_id AS category, created_at, user_id FROM vehicles");
+        const realEstate = await pool.query("SELECT id, name AS title, description, price_per_month AS price, category_id AS category, created_at, user_id FROM real_estate");
 
-        const vehiclesQuery = `
-            SELECT id, name AS title, description, price, category_id AS category, NULL AS subcategory, created_at, user_id, NULL AS image_url, 'Vehicle' AS type 
-            FROM vehicles`;
-
-        const realEstateQuery = `
-            SELECT id, name AS title, description, price_per_month AS price, category_id AS category, NULL AS subcategory, created_at, user_id, NULL AS image_url, 'RealEstate' AS type 
-            FROM real_estate`;
-
-        const query = `${productsQuery} UNION ALL ${vehiclesQuery} UNION ALL ${realEstateQuery} ORDER BY created_at DESC`;
-
-        const listings = await pool.query(query);
-        res.json(listings.rows);
-    } catch (error) {
-        console.error("Error fetching listings with filters:", error);
+        const listings = [...products.rows, ...vehicles.rows, ...realEstate.rows];
+        res.json(listings);
+    } catch (err) {
+        console.error("Error fetching listings:", err);
         res.status(500).json({ error: "Server error fetching listings" });
     }
 });

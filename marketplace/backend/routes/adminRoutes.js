@@ -75,10 +75,10 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async(req,res,next)
         const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [id]);
 
         if (result.rowCount === 0){
-            return next({ statusCode: 404, message: "Listing not found." });
+            return next({ statusCode: 404, message: "User not found." });
         }
 
-        res.json({ message: "Listing deleted successfully." });
+        res.json({ message: "User deleted successfully." });
     }catch (err){
         next(err);
     }
