@@ -45,11 +45,11 @@
   <tbody>
     <tr *ngFor="let listing of listings">
       <td>{{ listing.id }}</td>
-      <td>{{ listing.name }}</td>
+      <td>{{ listing.title }}</td>
       <td>{{ listing.price | currency }}</td>
       <td>{{ listing.category_id }}</td>
       <td>
-        <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
+        <button (click)="deleteListing(listing.id, listing.category_id)">Delete</button>
       </td>
     </tr>
   </tbody>

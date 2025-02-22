@@ -7,4 +7,6 @@ async function generateHash(password) {
 }
 
 // Replace with the passwords you need to hash
-generateHash("newpassword2");
+generateHash("admin123");
+generateHash("seller123");
+generateHash("buyer123");

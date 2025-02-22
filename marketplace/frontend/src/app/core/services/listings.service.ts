@@ -54,28 +54,5 @@ export class ListingsService {
     return this.http.patch<any>(`${this.apiUrl}/${type}/${id}`, updatedListing, { headers: this.getAuthHeaders() });
   }
 
-  // Admin Functions
-  getUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/admin/users`, { headers: this.getAuthHeaders() });
-  }
-
-  getAllListings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/admin/listings`, { headers: this.getAuthHeaders() });
-  }
-
-  banUser(userId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/admin/users/${userId}/ban`, {}, { headers: this.getAuthHeaders() });
-  }
-
-  unbanUser(userId: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/admin/users/${userId}/unban`, {}, { headers: this.getAuthHeaders() });
-  }
-
-  deleteUser(userId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/admin/users/${userId}`, { headers: this.getAuthHeaders() });
-  }
-
-  deleteListingAsAdmin(listingId: number, type: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/admin/${type}/${listingId}`, { headers: this.getAuthHeaders() });
-  }
+  
 }

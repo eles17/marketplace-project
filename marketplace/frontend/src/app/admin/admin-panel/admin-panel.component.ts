@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ListingsService } from '../../core/services/listings.service';
+import { AdminService } from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -14,7 +14,7 @@ export class AdminPanelComponent implements OnInit {
   listings: any[] = [];
   isLoading = false;
 
-  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {}
+  constructor(private adminService: AdminService, private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.fetchUsers();
@@ -23,7 +23,7 @@ export class AdminPanelComponent implements OnInit {
 
   fetchUsers(): void {
     this.isLoading = true;
-    this.listingsService.getUsers().subscribe({
+    this.adminService.getUsers().subscribe({
       next: (data: any[]) => {
         this.users = data;
         this.isLoading = false;
@@ -37,7 +37,7 @@ export class AdminPanelComponent implements OnInit {
 
   fetchListings(): void {
     this.isLoading = true;
-    this.listingsService.getAllListings().subscribe({
+    this.adminService.getAllListings().subscribe({
       next: (data) => {
         this.listings = data;
         this.isLoading = false;
@@ -50,7 +50,7 @@ export class AdminPanelComponent implements OnInit {
   }
 
   banUser(id: number): void {
-    this.listingsService.banUser(id).subscribe({
+    this.adminService.banUser(id).subscribe({
       next: () => {
         alert('User banned successfully!');
         this.fetchUsers();
@@ -63,7 +63,7 @@ export class AdminPanelComponent implements OnInit {
   }
 
   unbanUser(id: number): void {
-    this.listingsService.unbanUser(id).subscribe({
+    this.adminService.unbanUser(id).subscribe({
       next: () => {
         alert('User unbanned successfully!');
         this.fetchUsers();
@@ -77,7 +77,7 @@ export class AdminPanelComponent implements OnInit {
 
   deleteUser(id: number): void {
     if (confirm('Are you sure you want to delete this user?')) {
-      this.listingsService.deleteUser(id).subscribe({
+      this.adminService.deleteUser(id).subscribe({
         next: () => {
           alert('User deleted successfully!');
           this.fetchUsers();
@@ -90,9 +90,10 @@ export class AdminPanelComponent implements OnInit {
     }
   }
 
-  deleteListing(id: number, type: string): void {
+  deleteListing(id: number, categoryId: number): void {
+    const type = this.getListingType(categoryId); // Convert category_id to type
     if (confirm(`Are you sure you want to delete this ${type}?`)) {
-      this.listingsService.deleteListingAsAdmin(id, type).subscribe({
+      this.adminService.deleteListingAsAdmin(id, type).subscribe({
         next: () => {
           alert(`${type} deleted successfully!`);
           this.fetchListings();
@@ -102,6 +103,15 @@ export class AdminPanelComponent implements OnInit {
           alert(`Error deleting ${type}.`);
         }
       });
+    }
+  }
+  
+  getListingType(categoryId: number): string {
+    switch (categoryId) {
+      case 1: return 'products';
+      case 2: return 'vehicles';
+      case 3: return 'real-estate';
+      default: return 'products';
     }
   }
 }
