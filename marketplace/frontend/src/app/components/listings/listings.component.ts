@@ -114,7 +114,7 @@ export class ListingsComponent implements OnInit {
   }
 
   goToAddListing(): void {
-    this.router.navigate(['/listings/add-listing']);
+    this.router.navigateByUrl('/listings/add-listing');
   }
 
   editListing(id: number): void {

@@ -47,7 +47,11 @@ export class ListingDetailsComponent implements OnInit {
     });
   }
 
-  // **Fix: Add missing editListing() method**
+
+  goBackToListings(): void {
+    this.router.navigate(['/listings']);
+  }
+  
   editListing(): void {
     this.router.navigate([`/listings/edit/${this.listing.id}`], {
       queryParams: { type: this.listing.type }
@@ -59,7 +63,6 @@ export class ListingDetailsComponent implements OnInit {
       alert("Please fill in all required fields correctly.");
       return;
     }
-
     const category = parseInt(this.listing.category, 10);
     const subcategory = this.listing.subcategory ? parseInt(this.listing.subcategory, 10) : null;
     const listingType = this.listing.type || 'products';

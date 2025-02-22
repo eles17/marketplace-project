@@ -16,14 +16,18 @@ import { AdminPanelComponent } from './admin/admin-panel/admin-panel.component';
 const routes: Routes = [
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/register', component: RegisterComponent },
-  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] }, 
+  { path: 'admin', component: AdminPanelComponent, canActivate: [AdminGuard] },
   { path: 'dashboard', component: DashboardComponent },
-  { path: 'listings', component: ListingsComponent},
+  
+
+  { path: 'listings/add-listing', component: AddListingComponent }, 
   { path: 'listings/:id', component: ListingDetailsComponent, pathMatch: 'full' },
-{ path: 'listings/add-listing', component: AddListingComponent },
-{ path: 'listings/edit/:id', component: EditListingComponent },
-  { path: '', redirectTo: '/auth/login', pathMatch: 'full' }, // redirects to login
-  { path: '**', redirectTo: '/auth/login' }  // Handles unknown routes
+
+  { path: 'listings', component: ListingsComponent },
+  { path: 'listings/edit/:id', component: EditListingComponent },
+
+  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/auth/login' }
 ];
 
 @NgModule({

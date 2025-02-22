@@ -12,7 +12,7 @@
     <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
   </div>
 
-  <button routerLink="/listings">Back to Listings</button>
+  <button (click)="goBackToListings()">Back to Listings</button>
 </div>
 
 <ng-template #loading>
