@@ -5,8 +5,12 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL
 });
 
+// Improved connection handling
 pool.connect()
     .then(() => console.log("Connected to PostgreSQL on port 5432"))
-    .catch(err => console.error("Database connection error", err));
+    .catch(err => {
+        console.error("Database connection error:", err);
+        process.exit(1); // Exit process on DB failure
+    });
 
-module.exports = pool; // exports pool so they can be used in other files to run queries
+module.exports = pool; // Exports pool for queries in other files

@@ -1,18 +1,19 @@
 const express = require('express');
-const pool = require('../config/db');
+const pool = require('../../config/db');
 const router = express.Router();
+const authMiddleware = require('../../middleware/authMiddleware'); // Ensure authentication
 
 // Get all listings
-router.get('/listings', async (req, res, next) => {
+router.get('/', async (req, res, next) => {
     try {
-        const listings = await pool.query("SELECT * FROM products ORDER BY created_at DESC");
+        const listings = await pool.query("SELECT * FROM listings ORDER BY created_at DESC");
         res.json(listings.rows);
     } catch (err) {
         next(err);
     }
 });
 
-// CREATE LISTING - Automatically Add to Listings Table & Category Table
+// CREATE LISTING - Automatically Add to Listings Table & Main Category Table
 router.post("/create", authMiddleware, async (req, res) => {
     const { user_id, category_id, main_category, name, description, price, delivery_option, condition, image_url } = req.body;
 
