@@ -1,24 +1,61 @@
-<div *ngIf="listing; else loading">
-  <h2>{{ listing.title }}</h2>
-  <p><strong>Category:</strong> {{ listing.category }}</p>
-  <p><strong>Price:</strong> ${{ listing.price }}</p>
-  <p><strong>Description:</strong> {{ listing.description }}</p>
-  <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
-  <p><strong>Listing Owner ID:</strong> {{ listing.user_id }}</p>
-  <p><strong>Logged-in User ID:</strong> {{ userId }}</p>
+<div class="listing-details-container">
+  <h2>{{ listing?.name }}</h2> <!-- Listing Title -->
 
-  <div *ngIf="listing?.user_id === userId">
-    <button (click)="editListing()">Edit</button>
-    <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
+  <!-- Listing Image -->
+  <img *ngIf="listing?.image_url" [src]="listing.image_url" alt="{{ listing.name }}" class="listing-image"/>
+
+  <!-- Price & Category -->
+  <p><strong>Price:</strong> {{ listing?.price | currency }}</p>
+  <p><strong>Category:</strong> {{ getCategoryName(listing?.category_id) }}</p>
+  <p *ngIf="listing?.subcategory_id"><strong>Subcategory:</strong> {{ getSubCategoryName(listing?.subcategory_id) }}</p>
+
+  <!-- Listing Description -->
+  <p><strong>Description:</strong></p>
+  <p>{{ listing?.description }}</p>
+
+  <!-- Vehicle-Specific Details -->
+  <div *ngIf="listing?.main_category === 'Vehicles'">
+    <p><strong>Model:</strong> {{ listing?.model }}</p>
+    <p><strong>Vehicle Type:</strong> {{ listing?.vehicle_type }}</p>
+    <p><strong>Mileage:</strong> {{ listing?.mileage | number }}</p>
+    <p><strong>Fuel Type:</strong> {{ listing?.fuel_type }}</p>
+    <p><strong>Color:</strong> {{ listing?.color }}</p>
+    <p><strong>Condition:</strong> {{ listing?.condition }}</p>
+    <p><strong>First Registration:</strong> {{ listing?.first_registration | date }}</p>
   </div>
 
-  <button (click)="goBackToListings()">Back to Listings</button>
+  <!-- Real Estate-Specific Details -->
+  <div *ngIf="listing?.main_category === 'Real Estate'">
+    <p><strong>Type:</strong> {{ listing?.type }}</p>
+    <p><strong>Address:</strong> {{ listing?.address }}</p>
+    <p><strong>Rental Period:</strong> {{ listing?.rental_period }}</p>
+    <p><strong>Price Per Month:</strong> {{ listing?.price_per_month | currency }}</p>
+    <p><strong>Advance Payment:</strong> {{ listing?.advance_payment | currency }}</p>
+    <p><strong>Available:</strong> {{ listing?.available ? 'Yes' : 'No' }}</p>
+  </div>
+
+  <!-- Retail-Specific Details -->
+  <div *ngIf="listing?.main_category === 'Retail'">
+    <p><strong>Delivery Option:</strong> {{ listing?.delivery_option }}</p>
+    <p><strong>Condition:</strong> {{ listing?.condition }}</p>
+  </div>
+
+  <!-- Seller Information -->
+  <div class="seller-info" *ngIf="seller">
+    <h3>Seller Information</h3>
+    <p><strong>Name:</strong> {{ seller.full_name }}</p>
+    <p><strong>Email:</strong> <a href="mailto:{{ seller.email }}">{{ seller.email }}</a></p>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="listing-actions">
+    <button *ngIf="isOwner()" (click)="editListing()" class="btn btn-primary">Edit</button>
+    <button *ngIf="isOwner()" (click)="deleteListing()" class="btn btn-danger">Delete</button>
+    <button *ngIf="!isOwner()" (click)="contactSeller()" class="btn btn-success">Contact Seller</button>
+  </div>
+
+  <!-- Back Button -->
+  <div class="back-link">
+    <a routerLink="/listings">Back to Listings</a>
+  </div>
 </div>
-
-<ng-template #loading>
-  <p>Loading listing details...</p>
-</ng-template>
-
-<ng-template #errorTemplate>
-  <p>{{ errorMessage }}</p>
-</ng-template>

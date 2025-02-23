@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class ListingDetailsComponent implements OnInit {
   listing: any = {}; // Store listing details
+  seller: any = {}; // Store seller details
   userId: number | null = null; // Logged-in user ID
   isLoading: boolean = true; // Show loading spinner
   errorMessage: string = ''; // Store error messages
@@ -38,6 +39,10 @@ export class ListingDetailsComponent implements OnInit {
       next: (data) => {
         this.listing = data;
         this.isLoading = false;
+
+        if (this.listing.user_id) {
+          this.fetchSellerInfo(this.listing.user_id);
+        }
       },
       error: (err) => {
         this.errorMessage = 'Error fetching listing details.';
@@ -47,110 +52,83 @@ export class ListingDetailsComponent implements OnInit {
     });
   }
 
-
-  goBackToListings(): void {
-    this.router.navigate(['/listings']);
-  }
-  
-  editListing(): void {
-    this.router.navigate([`/listings/edit/${this.listing.id}`], {
-      queryParams: { type: this.listing.type }
-    });
-  }
-
-  updateListing(): void {
-    if (!this.listing.title || !this.listing.description || !this.listing.price || isNaN(this.listing.price) || !this.listing.category) {
-      alert("Please fill in all required fields correctly.");
-      return;
-    }
-    const category = parseInt(this.listing.category, 10);
-    const subcategory = this.listing.subcategory ? parseInt(this.listing.subcategory, 10) : null;
-    const listingType = this.listing.type || 'products';
-
-    const formData = new FormData();
-    formData.append("title", this.listing.title);
-    formData.append("description", this.listing.description);
-    formData.append("price", this.listing.price.toString());
-    formData.append("category", category.toString());
-    formData.append("subcategory", subcategory ? subcategory.toString() : "");
-
-    if (this.selectedFile) {
-      formData.append("image", this.selectedFile);
-    }
-
-    this.listingsService.updateListing(this.listing.id, formData, listingType).subscribe({
-      next: () => {
-        alert("Listing updated successfully!");
-        this.router.navigate(['/listings']);
+  // Fetch seller information
+  fetchSellerInfo(userId: number): void {
+    this.listingsService.getSellerById(userId).subscribe({
+      next: (data) => {
+        this.seller = data;
       },
       error: (err) => {
-        console.error("Error updating listing:", err);
-        alert("Error updating listing.");
+        console.error('Error fetching seller info:', err);
       }
     });
   }
 
-  deleteListing(id: number, type: string): void {
-    if (confirm(`Are you sure you want to delete this ${type}?`)) {
-      this.listingsService.deleteListing(id, type).subscribe({
+  // Check if the logged-in user is the owner of the listing
+  isOwner(): boolean {
+    return this.userId === this.listing?.user_id;
+  }
+
+  // Navigate to edit listing page
+  editListing(): void {
+    this.router.navigate([`/listings/edit/${this.listing.id}`], {
+      queryParams: { type: this.listing.main_category }
+    });
+  }
+
+  // Delete the listing
+  deleteListing(): void {
+    if (confirm(`Are you sure you want to delete this listing?`)) {
+      this.listingsService.deleteListing(this.listing.id, this.listing.main_category).subscribe({
         next: () => {
-          alert(`${type} deleted successfully!`);
+          alert(`Listing deleted successfully!`);
           this.router.navigate(['/listings']);
         },
         error: (err) => {
-          console.error(`Error deleting ${type}:`, err);
-          alert(`Error deleting ${type}.`);
+          console.error(`Error deleting listing:`, err);
+          alert(`Error deleting listing.`);
         }
       });
     }
   }
 
-  isValidListing(): boolean {
-    return !!(this.listing.title && this.listing.description &&
-      this.listing.price && !isNaN(this.listing.price) &&
-      this.listing.category);
+  // Contact seller (future implementation)
+  contactSeller(): void {
+    alert(`Feature coming soon: Contact ${this.seller.full_name}`);
   }
 
-  prepareFormData(): FormData {
-    const formData = new FormData();
-    formData.append("title", this.listing.title);
-    formData.append("description", this.listing.description);
-    formData.append("price", this.listing.price.toString());
-    formData.append("category", this.listing.category.toString());
-
-    if (this.listing.subcategory) {
-      formData.append("subcategory", this.listing.subcategory.toString());
-    }
-
-    if (this.selectedFile) {
-      formData.append("image", this.selectedFile);
-    }
-
-    return formData;
+  // Get category name from category ID
+  getCategoryName(categoryId: number): string {
+    const categories: { [key: number]: string } = {
+      1: 'Retail',
+      2: 'Vehicles',
+      3: 'Real Estate',
+      4: 'Electronics',
+      5: 'Fashion',
+      6: 'Home Goods',
+      7: 'Cars',
+      8: 'Motorcycles',
+      9: 'Trucks',
+      10: 'Apartments',
+      11: 'Houses',
+      12: 'Commercial Properties'
+    };
+    return categories[categoryId] || 'Unknown';
   }
 
-  getListingType(): string {
-    switch (this.listing.category) {
-      case 1:
-        return 'products';
-      case 2:
-        return 'vehicles';
-      case 3:
-        return 'real-estate';
-      default:
-        return 'products';
-    }
-  }
-
-  onFileSelected(event: any): void {
-    if (event.target.files.length > 0) {
-      const file = event.target.files[0];
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert("Invalid file type. Please select a JPG or PNG image.");
-        return;
-      }
-      this.selectedFile = file;
-    }
+  // Get subcategory name from subcategory ID
+  getSubCategoryName(subcategoryId: number): string {
+    const subcategories: { [key: number]: string } = {
+      4: 'Electronics',
+      5: 'Fashion',
+      6: 'Home Goods',
+      7: 'Cars',
+      8: 'Motorcycles',
+      9: 'Trucks',
+      10: 'Apartments',
+      11: 'Houses',
+      12: 'Commercial Properties'
+    };
+    return subcategories[subcategoryId] || 'None';
   }
 }
