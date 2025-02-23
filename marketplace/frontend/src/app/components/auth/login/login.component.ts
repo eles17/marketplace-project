@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { AuthService } from '../../../core/services/auth.service';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -9,18 +9,27 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
-  loginData = { email: '', password: '' };
+  credentials = { email: '', password: '' };
   errorMessage: string = '';
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  onLogin() {
-    this.authService.login(this.loginData).subscribe({
-      next: () => {
-        this.router.navigate(['/dashboard']); // Redirect to dashboard after login
+  login(): void {
+    this.authService.login(this.credentials).subscribe({
+      next: (response) => {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.user));
+
+        // Redirect based on role
+        if (response.user.is_admin) {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Login failed!';
+        console.error("Login Error:", err);
+        this.errorMessage = "Invalid email or password.";
       }
     });
   }
