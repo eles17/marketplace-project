@@ -1,39 +1,43 @@
 <div class="dashboard-container">
-    <h2>Dashboard</h2>
-  
-    <!-- Welcome Message -->
-    <p>Welcome back, <strong>{{ user?.full_name }}</strong>!</p>
-  
-    <!-- Quick Actions -->
-    <div class="dashboard-actions">
-      <button routerLink="/listings/add-listing" class="btn btn-success">Create New Listing</button>
-      <button *ngIf="isAdmin()" routerLink="/admin" class="btn btn-warning">Admin Panel</button>
-      <button (click)="logout()" class="btn btn-danger">Logout</button>
-    </div>
-  
-    <hr>
-  
-    <!-- User Listings -->
-    <h3>Your Listings</h3>
-    <div *ngIf="listings.length > 0; else noListings">
-      <div *ngFor="let listing of listings" class="listing-item">
-        <h4>{{ listing.name }}</h4>
-        <img *ngIf="listing.image_url" [src]="listing.image_url" alt="{{ listing.name }}" class="listing-image"/>
-  
-        <p><strong>Category:</strong> {{ getCategoryName(listing.category_id) }}</p>
-        <p *ngIf="listing.subcategory_id"><strong>Subcategory:</strong> {{ getSubCategoryName(listing.subcategory_id) }}</p>
-        <p><strong>Price:</strong> {{ listing.price | currency }}</p>
-        <p><strong>Posted On:</strong> {{ listing.created_at | date }}</p>
-  
-        <div class="listing-actions">
-          <button (click)="editListing(listing.id)" class="btn btn-primary">Edit</button>
-          <button (click)="deleteListing(listing.id, listing.main_category)" class="btn btn-danger">Delete</button>
-          <button routerLink="/listings/{{listing.id}}" class="btn btn-info">View Details</button>
-        </div>
-      </div>
-    </div>
-  
-    <ng-template #noListings>
-      <p>You have no active listings.</p>
-    </ng-template>
+  <h2>Welcome, {{ userName }}!</h2>
+
+  <!-- Quick Actions for Users -->
+  <div class="quick-actions">
+    <button routerLink="/listings/add-listing" class="btn btn-primary">Add New Listing</button>
+    <button *ngIf="authService.isAdmin()" routerLink="/admin" class="btn btn-admin">Admin Panel</button>
   </div>
+
+  <!-- Recent Listings -->
+  <h3>Recent Listings</h3>
+  <div *ngIf="recentListings.length > 0; else noListings" class="listings-container">
+    <div *ngFor="let listing of recentListings" class="listing-card">
+      <img *ngIf="listing.image_url" [src]="listing.image_url" alt="{{ listing.name }}" />
+      <h4>{{ listing.name }}</h4>
+      <p><strong>Price:</strong> {{ listing.price | currency }}</p>
+      <p><strong>Category:</strong> {{ getCategoryName(listing.category_id) }}</p>
+      <button (click)="viewListing(listing.id, listing.main_category)" class="btn btn-details">View Details</button>
+    </div>
+  </div>
+
+  <!-- No Listings Message -->
+  <ng-template #noListings>
+    <p>No listings available. <a routerLink="/listings/add-listing">Create one</a>!</p>
+  </ng-template>
+
+  <!-- User's Listings -->
+  <h3>My Listings</h3>
+  <div *ngIf="userListings.length > 0; else noUserListings" class="listings-container">
+    <div *ngFor="let listing of userListings" class="listing-card">
+      <img *ngIf="listing.image_url" [src]="listing.image_url" alt="{{ listing.name }}" />
+      <h4>{{ listing.name }}</h4>
+      <p><strong>Price:</strong> {{ listing.price | currency }}</p>
+      <p><strong>Category:</strong> {{ getCategoryName(listing.category_id) }}</p>
+      <button (click)="editListing(listing.id, listing.main_category)" class="btn btn-edit">Edit</button>
+      <button (click)="deleteListing(listing.id, listing.main_category)" class="btn btn-delete">Delete</button>
+    </div>
+  </div>
+
+  <ng-template #noUserListings>
+    <p>You haven't created any listings yet. <a routerLink="/listings/add-listing">Create one now</a>!</p>
+  </ng-template>
+</div>

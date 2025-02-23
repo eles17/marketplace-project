@@ -10,72 +10,83 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  user: any = {};
-  listings: any[] = [];
-  errorMessage: string = '';
+  recentListings: any[] = [];
+  userListings: any[] = [];
+  userName: string = '';
 
   constructor(
     private listingsService: ListingsService,
-    private authService: AuthService,
-    private router: Router
+    private router: Router,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.loadUser();
-    this.fetchUserListings();
+    this.loadRecentListings();
+    this.loadUserListings();
+    this.loadUserName();
   }
 
-  loadUser(): void {
-    this.user = this.authService.getUser();
-  }
-
-  fetchUserListings(): void {
-    this.listingsService.getUserListings().subscribe({
+  loadRecentListings(): void {
+    this.listingsService.getAllPublicListings().subscribe({
       next: (data) => {
-        this.listings = data;
+        this.recentListings = data.slice(0, 5); // Show only the latest 5 listings
       },
       error: (err) => {
-        console.error("Error fetching user listings:", err);
-        this.errorMessage = "Failed to load listings.";
+        console.error('Error fetching recent listings:', err);
       }
     });
   }
 
-  editListing(id: number): void {
-    this.router.navigate([`/listings/edit/${id}`]);
+  loadUserListings(): void {
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    this.listingsService.getUserListings(userId).subscribe({
+      next: (data) => {
+        this.userListings = data;
+      },
+      error: (err) => {
+        console.error('Error fetching user listings:', err);
+      }
+    });
+  }
+
+  loadUserName(): void {
+    const user = this.authService.getUser();
+    if (user) {
+      this.userName = user.full_name || 'User';
+    }
+  }
+
+  viewListing(id: number, category: string): void {
+    this.router.navigate([`/listings/${id}`], { queryParams: { type: category.toLowerCase() } });
+  }
+
+  editListing(id: number, category: string): void {
+    this.router.navigate([`/listings/edit/${id}`], { queryParams: { type: category.toLowerCase() } });
   }
 
   deleteListing(id: number, category: string): void {
-    if (confirm("Are you sure you want to delete this listing?")) {
-      this.listingsService.deleteListing(id, category).subscribe({
+    if (confirm('Are you sure you want to delete this listing?')) {
+      this.listingsService.deleteListing(id, category.toLowerCase()).subscribe({
         next: () => {
-          this.listings = this.listings.filter(listing => listing.id !== id);
-          alert("Listing deleted successfully!");
+          alert('Listing deleted successfully!');
+          this.loadUserListings(); // Refresh user's listings
         },
         error: (err) => {
-          console.error("Error deleting listing:", err);
-          alert("Error deleting listing.");
+          console.error('Error deleting listing:', err);
+          alert('Error deleting listing.');
         }
       });
     }
   }
 
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
-  }
-
   getCategoryName(categoryId: number): string {
-    const category = this.listingsService.getCategoryById(categoryId);
-    return category ? category.name : "Unknown Category";
-  }
-
-  getSubCategoryName(subcategoryId: number): string {
-    const subcategory = this.listingsService.getSubCategoryById(subcategoryId);
-    return subcategory ? subcategory.name : "Unknown Subcategory";
+    const categories = {
+      1: 'Retail',
+      2: 'Vehicles',
+      3: 'Real Estate'
+    };
+    return categories[categoryId] || 'Unknown';
   }
 }
