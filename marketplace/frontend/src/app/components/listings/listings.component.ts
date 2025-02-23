@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../core/services/listings.service';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { AdminService } from '../../core/services/admin.service';
 
 @Component({
   selector: 'app-listings',
@@ -22,15 +21,8 @@ export class ListingsComponent implements OnInit {
   maxPrice: number | null = null;
   searchQuery: string = '';
   sortOption: string = 'newest';
-  selectedFile: File | null = null;
 
-  newListing: { title: string; description: string; price: number | null } = {
-    title: '',
-    description: '',
-    price: null
-  };
-
-  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService, private adminService: AdminService) {}
+  constructor(private listingsService: ListingsService, private router: Router, private authService: AuthService) {}
 
   ngOnInit(): void {
     this.userId = this.authService.getUserId();
@@ -41,7 +33,7 @@ export class ListingsComponent implements OnInit {
   loadCategories(): void {
     this.listingsService.getCategories().subscribe({
       next: (data: any[]) => {
-        this.categories = data;
+        this.categories = data.filter(cat => !cat.sub1_id); // Get only main categories
       },
       error: (err: any) => {
         console.error('Error fetching categories:', err);
@@ -49,49 +41,22 @@ export class ListingsComponent implements OnInit {
     });
   }
 
-  createListing(): void {
-    if (!this.newListing.title || !this.newListing.description || !this.newListing.price || !this.selectedMainCategory) {
-      alert("Please fill in all required fields.");
+  updateSubcategories(): void {
+    if (!this.selectedMainCategory) {
+      this.subcategories = [];
+      this.selectedSubCategory = null;
       return;
     }
 
-    const formData = new FormData();
-    formData.append("title", this.newListing.title);
-    formData.append("description", this.newListing.description);
-    formData.append("price", this.newListing.price.toString());
-    formData.append("category", this.selectedMainCategory.toString());
-    if (this.selectedSubCategory) {
-      formData.append("subcategory", this.selectedSubCategory.toString());
-    }
-    if (this.selectedFile) {
-      formData.append("image", this.selectedFile);
-    }
-
-    const type = this.getListingType(this.selectedMainCategory);
-    this.listingsService.createListing(formData, type).subscribe({
-      next: () => {
-        alert("Listing created successfully!");
-        this.router.navigate(['/listings']);
-      },
-      error: (err) => {
-        console.error("Error creating listing:", err);
-        alert("Error creating listing.");
-      }
-    });
-  }
-
-  getListingType(categoryId: number): string {
-    switch (categoryId) {
-      case 1: return 'products';
-      case 2: return 'vehicles';
-      case 3: return 'real-estate';
-      default: return 'products';
-    }
+    const selectedCategory = this.categories.find(cat => cat.id === this.selectedMainCategory);
+    this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
   }
 
   fetchListings(): void {
     this.listingsService.getAllPublicListings().subscribe({
-      next: (data) => { this.listings = data; },
+      next: (data) => { 
+        this.listings = data; 
+      },
       error: (err) => console.error('Error fetching listings:', err)
     });
   }
@@ -111,38 +76,58 @@ export class ListingsComponent implements OnInit {
   }
 
   goToAddListing(): void {
-    this.router.navigateByUrl('/listings/add-listing');
+    this.router.navigate(['/listings/add-listing']);
   }
 
-  editListing(id: number): void {
-    this.router.navigate([`/listings/edit/${id}`]);
+  editListing(id: number, mainCategory: string): void {
+    this.router.navigate([`/listings/edit/${id}`], { queryParams: { type: mainCategory } });
   }
 
-  onMainCategoryChange(): void {
-    if (!this.selectedMainCategory) {
-      this.subcategories = [];
-      this.selectedSubCategory = null;
-      return;
-    }
-  
-    const selectedCategory = this.categories.find(cat => cat.id == this.selectedMainCategory);
-    this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
-    this.selectedSubCategory = null;
-  }
-  
-  deleteListing(id: number, categoryId: number): void {
-    const type = this.getListingType(categoryId);
-    if (confirm(`Are you sure you want to delete this ${type}?`)) {
-      this.adminService.deleteListingAsAdmin(id, type).subscribe({
+  deleteListing(id: number, mainCategory: string): void {
+    if (confirm(`Are you sure you want to delete this listing?`)) {
+      this.listingsService.deleteListing(id, mainCategory).subscribe({
         next: () => {
-          alert(`${type} deleted successfully!`);
+          alert(`Listing deleted successfully!`);
           this.fetchListings();
         },
-        error: (err: any) => {
-          console.error(`Error deleting ${type}:`, err);
-          alert(`Error deleting ${type}.`);
+        error: (err) => {
+          console.error(`Error deleting listing:`, err);
+          alert(`Error deleting listing.`);
         }
       });
     }
+  }
+
+  getCategoryName(categoryId: number): string {
+    const categories: { [key: number]: string } = {
+      1: 'Retail',
+      2: 'Vehicles',
+      3: 'Real Estate',
+      4: 'Electronics',
+      5: 'Fashion',
+      6: 'Home Goods',
+      7: 'Cars',
+      8: 'Motorcycles',
+      9: 'Trucks',
+      10: 'Apartments',
+      11: 'Houses',
+      12: 'Commercial Properties'
+    };
+    return categories[categoryId] || 'Unknown';
+  }
+
+  getSubCategoryName(subcategoryId: number): string {
+    const subcategories: { [key: number]: string } = {
+      4: 'Electronics',
+      5: 'Fashion',
+      6: 'Home Goods',
+      7: 'Cars',
+      8: 'Motorcycles',
+      9: 'Trucks',
+      10: 'Apartments',
+      11: 'Houses',
+      12: 'Commercial Properties'
+    };
+    return subcategories[subcategoryId] || 'None';
   }
 }

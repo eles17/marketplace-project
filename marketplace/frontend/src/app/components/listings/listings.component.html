@@ -1,24 +1,24 @@
-<h2>Listings</h2>
+<div class="listings-container">
+  <h2>All Listings</h2>
 
-<!-- Filters Section -->
-<div class="filters">
-  <div>
+  <!-- Filters Section -->
+  <div class="filters">
     <label>Main Category:</label>
-<select [(ngModel)]="selectedMainCategory" (change)="onMainCategoryChange()">
-  <option [value]="null">All</option>
-  <option *ngFor="let category of categories" [value]="category.id">
-    {{ category.name }}
-  </option>
-</select>
+    <select [(ngModel)]="selectedMainCategory" (change)="updateSubcategories()">
+      <option [value]="null">All</option>
+      <option *ngFor="let category of categories" [value]="category.id">
+        {{ category.name }}
+      </option>
+    </select>
 
-<!-- Show Subcategory only if there are options -->
-<label *ngIf="subcategories.length > 0">Subcategory:</label>
-<select *ngIf="subcategories.length > 0" [(ngModel)]="selectedSubCategory">
-  <option [value]="null">All</option>
-  <option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
-    {{ subcategory.name }}
-  </option>
-</select>
+    <!-- Show Subcategory only if available -->
+    <label *ngIf="subcategories.length > 0">Subcategory:</label>
+    <select *ngIf="subcategories.length > 0" [(ngModel)]="selectedSubCategory">
+      <option [value]="null">All</option>
+      <option *ngFor="let subcategory of subcategories" [value]="subcategory.id">
+        {{ subcategory.name }}
+      </option>
+    </select>
 
     <label>Min Price:</label>
     <input type="number" [(ngModel)]="minPrice" placeholder="Min Price">
@@ -44,17 +44,19 @@
   <hr>
 
   <div *ngIf="listings.length > 0; else noListings">
-    <div *ngFor="let listing of listings">
+    <div class="listing-card" *ngFor="let listing of listings">
       <h3>
-        <a [routerLink]="['/listings', listing.id]">{{ listing.title }}</a>
+        <a [routerLink]="['/listings', listing.id]" [queryParams]="{ type: listing.main_category }">
+          {{ listing.name }}
+        </a>
       </h3>
-      <p>{{ listing.description }}</p>
-      <p><strong>Price:</strong> ${{ listing.price }}</p>
-      <p><strong>Posted on:</strong> {{ listing.created_at | date }}</p>
+      <p><strong>Price:</strong> {{ listing.price | currency }}</p>
+      <p><strong>Category:</strong> {{ getCategoryName(listing.category_id) }}</p>
+      <p *ngIf="listing.subcategory_id"><strong>Subcategory:</strong> {{ getSubCategoryName(listing.subcategory_id) }}</p>
 
       <div *ngIf="listing.user_id === userId">
-        <button (click)="editListing(listing.id)">Edit</button>
-        <button (click)="deleteListing(listing.id, listing.type)">Delete</button>
+        <button (click)="editListing(listing.id, listing.main_category)">Edit</button>
+        <button (click)="deleteListing(listing.id, listing.main_category)">Delete</button>
       </div>
 
       <hr />
@@ -66,4 +68,4 @@
   <p>No listings available.</p>
 </ng-template>
 
-<button routerLink="/listings/add-listing">Add Listing</button>
+<button (click)="goToAddListing()">Add Listing</button>
