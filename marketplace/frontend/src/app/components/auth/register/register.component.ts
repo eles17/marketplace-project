@@ -1,26 +1,28 @@
 import { Component } from '@angular/core';
-import { ApiService } from '../../../core/services/api.service';
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
   standalone: false,
   templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+  styleUrls: ['./register.component.scss']
 })
 export class RegisterComponent {
-  registerData = { full_name: '', email: '', password: '', address: '' };
+  user = { full_name: '', email: '', password: '', address: '' };
   errorMessage: string = '';
 
-  constructor(private apiService: ApiService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
-  onRegister() {
-    this.apiService.register(this.registerData).subscribe({
-      next: () => {
-        this.router.navigate(['/auth/login']); // Redirect to login after successful registration
+  register(): void {
+    this.authService.register(this.user).subscribe({
+      next: (response) => {
+        alert("Registration successful! Please log in.");
+        this.router.navigate(['/auth/login']);
       },
-      error: (err: any) => {
-        this.errorMessage = err.error?.message || 'Registration failed!';
+      error: (err) => {
+        console.error("Registration Error:", err);
+        this.errorMessage = err.error.message || "Registration failed.";
       }
     });
   }
