@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ListingsService } from '../../../core/services/listings.service';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 
 @Component({
@@ -11,55 +10,55 @@ import { Router } from '@angular/router';
   styleUrls: ['./add-listing.component.scss']
 })
 export class AddListingComponent implements OnInit {
-  listing = {
+  listing: any = {
     title: '',
     description: '',
-    price: null as number | null,
-    category: null as number | null
+    price: null,
+    category_id: null,
+    image_url: '',
+    model: '',
+    vehicle_type: '',
+    mileage: null,
+    fuel_type: '',
+    color: '',
+    condition: '',
+    type: '',
+    address: '',
+    rental_period: '',
+    price_per_month: null,
+    advance_payment: null,
+    available: true,
+    delivery_option: ''
   };
 
-  // Define only the 3 main categories
-  mainCategories = [
-    { id: 1, name: 'Retail' },
-    { id: 2, name: 'Vehicle' },
-    { id: 3, name: 'Real Estate' }
-  ];
-  
-  subcategories: { id: number; name: string; main_category_id: number }[] = [];
+  categories: any[] = [];
+  subcategories: any[] = [];
   selectedMainCategory: number | null = null;
   selectedFile: File | null = null;
   errorMessage: string = '';
 
   constructor(private listingsService: ListingsService, private http: HttpClient, private router: Router) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadCategories();
+  }
 
-  loadSubcategories(): void {
-    this.http.get<{ id: number; name: string; main_category_id: number }[]>(
-      `${environment.apiUrl}/subcategories`
-    ).subscribe({
-      next: (data) => {
-        console.log("Subcategories received:", data);
-        this.subcategories = data;
+  loadCategories(): void {
+    this.listingsService.getCategories().subscribe({
+      next: (data: any[]) => {
+        this.categories = data.filter(cat => !cat.sub1_id);
       },
-      error: (error) => {
-        console.error('Error fetching subcategories:', error);
-        this.errorMessage = "Failed to load subcategories.";
+      error: (err) => {
+        console.error('Error fetching categories:', err);
+        this.errorMessage = "Failed to load categories.";
       }
     });
   }
 
   updateSubcategories(): void {
     if (this.selectedMainCategory) {
-      this.listingsService.getSubcategories(this.selectedMainCategory).subscribe({
-        next: (data) => {
-          this.subcategories = data;
-        },
-        error: (error) => {
-          console.error('Error fetching subcategories:', error);
-          this.errorMessage = "Failed to load subcategories.";
-        }
-      });
+      const selectedCategory = this.categories.find(cat => cat.id === this.selectedMainCategory);
+      this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
     } else {
       this.subcategories = [];
     }
@@ -68,11 +67,6 @@ export class AddListingComponent implements OnInit {
   onFileSelected(event: any): void {
     if (event.target.files.length > 0) {
       const file = event.target.files[0];
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        alert("Invalid file type. Please select a JPG or PNG image.");
-        return;
-      }
       this.selectedFile = file;
     }
   }
@@ -98,25 +92,18 @@ export class AddListingComponent implements OnInit {
     });
   }
 
-  resetForm(): void {
-    this.listing = { title: '', description: '', price: null, category: null };
-    this.selectedFile = null;
-    this.selectedMainCategory = null;
-    this.subcategories = [];
-  }
-
   isValidListing(): boolean {
-    return !!(this.listing.title && this.listing.description && 
-              this.listing.price && !isNaN(this.listing.price) &&
-              this.selectedMainCategory && this.listing.category);
+    return !!(this.listing.title && this.listing.description &&
+              this.listing.price && this.selectedMainCategory && this.listing.category_id);
   }
 
   prepareFormData(): FormData {
     const formData = new FormData();
-    formData.append("title", this.listing.title);
-    formData.append("description", this.listing.description);
-    formData.append("price", this.listing.price!.toString());
-    formData.append("category", this.listing.category!.toString());
+    for (const key in this.listing) {
+      if (this.listing[key] !== null) {
+        formData.append(key, this.listing[key].toString());
+      }
+    }
 
     if (this.selectedFile) {
       formData.append("image", this.selectedFile);
@@ -126,15 +113,7 @@ export class AddListingComponent implements OnInit {
   }
 
   getListingType(): string {
-    switch (this.selectedMainCategory) {
-      case 1:
-        return 'retail';
-      case 2:
-        return 'vehicle';
-      case 3:
-        return 'real-estate';
-      default:
-        return 'retail';
-    }
+    return this.selectedMainCategory === 1 ? 'products' :
+           this.selectedMainCategory === 2 ? 'vehicles' : 'real-estate';
   }
 }

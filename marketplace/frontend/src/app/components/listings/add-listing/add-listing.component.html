@@ -1,31 +1,102 @@
-<h2>Add New Listing</h2>
+<div class="add-listing-container">
+  <h2>Add New Listing</h2>
 
-<form (ngSubmit)="createListing()">
-  <label>Title:</label>
-  <input type="text" [(ngModel)]="listing.title" name="title" required>
+  <form (ngSubmit)="createListing()">
+    <!-- Listing Title -->
+    <label>Title:</label>
+    <input type="text" [(ngModel)]="listing.title" name="title" required>
 
-  <label>Description:</label>
-  <textarea [(ngModel)]="listing.description" name="description" required></textarea>
+    <!-- Listing Description -->
+    <label>Description:</label>
+    <textarea [(ngModel)]="listing.description" name="description" required></textarea>
 
-  <label>Price:</label>
-  <input type="number" [(ngModel)]="listing.price" name="price" required>
+    <!-- Price Input -->
+    <label>Price:</label>
+    <input type="number" [(ngModel)]="listing.price" name="price" required>
 
-  <!-- Main Category Dropdown -->
-  <label>Main Category:</label>
-  <select [(ngModel)]="selectedMainCategory" name="mainCategory" (change)="updateSubcategories()" required>
-    <option value="" disabled selected>Select Main Category</option>
-    <option *ngFor="let category of mainCategories" [value]="category.id">{{ category.name }}</option>
-  </select>
+    <!-- Main Category Dropdown -->
+    <label>Main Category:</label>
+    <select [(ngModel)]="selectedMainCategory" name="mainCategory" (change)="updateSubcategories()" required>
+      <option value="" disabled selected>Select Main Category</option>
+      <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+    </select>
 
-  <!-- Subcategory Dropdown (Disabled until Main Category is selected) -->
-  <label>Subcategory:</label>
-  <select [(ngModel)]="listing.category" name="subcategory" required [disabled]="!subcategories.length">
-    <option value="" disabled selected>Select Subcategory</option>
-    <option *ngFor="let sub of subcategories" [value]="sub.id">{{ sub.name }}</option>
-  </select>
+    <!-- Subcategory Dropdown -->
+    <label>Subcategory:</label>
+    <select [(ngModel)]="listing.category_id" name="subcategory" required [disabled]="!subcategories.length">
+      <option value="" disabled selected>Select Subcategory</option>
+      <option *ngFor="let sub of subcategories" [value]="sub.id">{{ sub.name }}</option>
+    </select>
 
-  <label>Upload Image:</label>
-  <input type="file" (change)="onFileSelected($event)" required>
+    <!-- Category-Specific Fields -->
+    <div *ngIf="selectedMainCategory === 2"> <!-- Vehicles -->
+      <label>Model:</label>
+      <input type="text" [(ngModel)]="listing.model" name="model">
 
-  <button type="submit">Create Listing</button>
-</form>
+      <label>Vehicle Type:</label>
+      <input type="text" [(ngModel)]="listing.vehicle_type" name="vehicle_type">
+
+      <label>Mileage:</label>
+      <input type="number" [(ngModel)]="listing.mileage" name="mileage">
+
+      <label>Fuel Type:</label>
+      <input type="text" [(ngModel)]="listing.fuel_type" name="fuel_type">
+
+      <label>Color:</label>
+      <input type="text" [(ngModel)]="listing.color" name="color">
+
+      <label>Condition:</label>
+      <select [(ngModel)]="listing.condition" name="condition">
+        <option value="New">New</option>
+        <option value="Used">Used</option>
+        <option value="Broken">Broken</option>
+      </select>
+    </div>
+
+    <div *ngIf="selectedMainCategory === 3"> <!-- Real Estate -->
+      <label>Type:</label>
+      <input type="text" [(ngModel)]="listing.type" name="type">
+
+      <label>Address:</label>
+      <input type="text" [(ngModel)]="listing.address" name="address">
+
+      <label>Rental Period:</label>
+      <input type="text" [(ngModel)]="listing.rental_period" name="rental_period">
+
+      <label>Price Per Month:</label>
+      <input type="number" [(ngModel)]="listing.price_per_month" name="price_per_month">
+
+      <label>Advance Payment:</label>
+      <input type="number" [(ngModel)]="listing.advance_payment" name="advance_payment">
+
+      <label>Available:</label>
+      <select [(ngModel)]="listing.available" name="available">
+        <option [ngValue]="true">Yes</option>
+        <option [ngValue]="false">No</option>
+      </select>
+    </div>
+
+    <div *ngIf="selectedMainCategory === 1"> <!-- Retail -->
+      <label>Delivery Option:</label>
+      <select [(ngModel)]="listing.delivery_option" name="delivery_option">
+        <option value="Self-Pickup">Self-Pickup</option>
+        <option value="Postal Delivery">Postal Delivery</option>
+        <option value="Courier">Courier</option>
+        <option value="Express">Express</option>
+      </select>
+
+      <label>Condition:</label>
+      <select [(ngModel)]="listing.condition" name="condition">
+        <option value="New">New</option>
+        <option value="Used">Used</option>
+        <option value="Broken">Broken</option>
+      </select>
+    </div>
+
+    <!-- Image Upload -->
+    <label>Upload Image:</label>
+    <input type="file" (change)="onFileSelected($event)" required>
+
+    <button type="submit">Create Listing</button>
+  </form>
+</div>
