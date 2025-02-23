@@ -31,6 +31,10 @@ export class ListingsService {
     return this.http.get<any[]>(`${this.apiUrl}/listings`, { headers: this.getAuthHeaders() });
   }
 
+  getUserListings(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/listings/user/${userId}`, { headers: this.getAuthHeaders() });
+  }
+
   getProducts(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/products`, { headers: this.getAuthHeaders() });
   }
@@ -59,5 +63,8 @@ export class ListingsService {
     return this.http.patch<any>(`${this.apiUrl}/${type}/${id}`, updatedListing, { headers: this.getAuthHeaders() });
   }
 
+  getSellerById(userId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/users/${userId}`, { headers: this.getAuthHeaders() });
+}
   
 }

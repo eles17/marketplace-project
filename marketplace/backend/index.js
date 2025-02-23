@@ -15,7 +15,7 @@ const rateLimit = require("express-rate-limit");
 const errorHandler = require("./middleware/errorHandler");
 
 // Updated Routes
-const listingsRoutes = require('./routes/listingsRoutes');
+const listingsRoutes = require('./routes/categories/listingsRoutes');
 const categoriesRoutes = require('./routes/categories/categoriesRoutes'); // Merged Main & Subcategory routes
 const productsRoutes = require('./routes/categories/productsRoutes');
 const vehiclesRoutes = require('./routes/categories/vehiclesRoutes');

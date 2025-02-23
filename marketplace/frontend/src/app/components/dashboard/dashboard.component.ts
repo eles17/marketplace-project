@@ -38,25 +38,31 @@ export class DashboardComponent implements OnInit {
   }
 
   loadUserListings(): void {
-    const userId = this.authService.getUserId();
+    const userId = this.authService.getUserId(); 
     if (!userId) return;
 
     this.listingsService.getUserListings(userId).subscribe({
-      next: (data) => {
+      next: (data: any) => { 
         this.userListings = data;
       },
-      error: (err) => {
+      error: (err: any) => { 
         console.error('Error fetching user listings:', err);
       }
     });
-  }
+}
 
-  loadUserName(): void {
-    const user = this.authService.getUser();
-    if (user) {
-      this.userName = user.full_name || 'User';
+loadUserName(): void {
+  const storedUser = localStorage.getItem('user'); 
+  if (storedUser) {
+    try {
+      const user = JSON.parse(storedUser);
+      this.userName = user.full_name || 'User'; 
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      this.userName = 'User';
     }
   }
+}
 
   viewListing(id: number, category: string): void {
     this.router.navigate([`/listings/${id}`], { queryParams: { type: category.toLowerCase() } });
@@ -82,11 +88,11 @@ export class DashboardComponent implements OnInit {
   }
 
   getCategoryName(categoryId: number): string {
-    const categories = {
+    const categories: Record<number, string> = { 
       1: 'Retail',
       2: 'Vehicles',
       3: 'Real Estate'
     };
     return categories[categoryId] || 'Unknown';
-  }
+}
 }

@@ -49,18 +49,18 @@ export class EditListingComponent implements OnInit {
   }
 
   loadListing(listingId: number): void {
-    this.listingsService.getListingById(listingId).subscribe({
-      next: (data) => {
+    this.listingsService.getListingById(listingId, this.listing.main_category).subscribe({ 
+      next: (data: any) => { 
         this.listing = data;
         this.selectedMainCategory = this.getMainCategory(data.category_id);
         this.updateSubcategories();
       },
-      error: (err) => {
+      error: (err: any) => { 
         console.error("Error fetching listing details:", err);
         this.errorMessage = 'Error fetching listing details.';
       }
     });
-  }
+}
 
   updateSubcategories(): void {
     if (this.selectedMainCategory) {
@@ -83,18 +83,17 @@ export class EditListingComponent implements OnInit {
       alert("Please fill in all required fields.");
       return;
     }
-
-    const formData = this.prepareFormData();
-    this.listingsService.updateListing(this.listing.id, formData).subscribe({
-      next: () => {
-        alert("Listing updated successfully!");
-        this.router.navigate(['/listings']);
-      },
-      error: (err) => {
-        console.error("Error updating listing:", err);
-        alert("Error updating listing.");
-      }
-    });
+      const formData = this.prepareFormData();
+      this.listingsService.updateListing(this.listing.id, formData, this.listing.main_category).subscribe({ 
+        next: () => {
+          alert("Listing updated successfully!");
+          this.router.navigate(['/listings']);
+        },
+        error: (err: any) => { 
+          console.error("Error updating listing:", err);
+          alert("Error updating listing.");
+        }
+      });
   }
 
   isValidListing(): boolean {

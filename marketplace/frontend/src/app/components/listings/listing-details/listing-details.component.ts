@@ -54,15 +54,15 @@ export class ListingDetailsComponent implements OnInit {
 
   // Fetch seller information
   fetchSellerInfo(userId: number): void {
-    this.listingsService.getSellerById(userId).subscribe({
-      next: (data) => {
+    this.listingsService.getSellerById(userId).subscribe({ 
+      next: (data: any) => { 
         this.seller = data;
       },
-      error: (err) => {
+      error: (err: any) => { 
         console.error('Error fetching seller info:', err);
       }
     });
-  }
+}
 
   // Check if the logged-in user is the owner of the listing
   isOwner(): boolean {
