@@ -1,56 +1,77 @@
-<h2>Admin Panel</h2>
+<div class="admin-panel-container">
+  <h2>Admin Panel</h2>
 
-<!-- Show loading spinner -->
-<div *ngIf="isLoading">Loading data...</div>
+  <!-- Users Management Section -->
+  <h3>Users</h3>
+  <div *ngIf="isLoading; else usersTable">
+    <p>Loading users...</p>
+  </div>
 
-<!-- Users Table -->
-<h3>Users</h3>
-<table *ngIf="!isLoading">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let user of users">
-      <td>{{ user.id }}</td>
-      <td>{{ user.name }}</td>
-      <td>{{ user.email }}</td>
-      <td>{{ user.is_banned ? 'Banned' : 'Active' }}</td>
-      <td>
-        <button (click)="banUser(user.id)" *ngIf="!user.is_banned">Ban</button>
-        <button (click)="unbanUser(user.id)" *ngIf="user.is_banned">Unban</button>
-        <button (click)="deleteUser(user.id)">Delete</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <ng-template #usersTable>
+    <table *ngIf="users.length > 0; else noUsers">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users">
+          <td>{{ user.id }}</td>
+          <td>{{ user.full_name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.is_banned ? 'Banned' : 'Active' }}</td>
+          <td>
+            <button *ngIf="!user.is_banned" (click)="banUser(user.id)" class="btn btn-warning">Ban</button>
+            <button *ngIf="user.is_banned" (click)="unbanUser(user.id)" class="btn btn-success">Unban</button>
+            <button (click)="deleteUser(user.id)" class="btn btn-danger">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-template>
 
-<!-- Listings Table -->
-<h3>Listings</h3>
-<table *ngIf="!isLoading">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Title</th>
-      <th>Price</th>
-      <th>Category</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let listing of listings">
-      <td>{{ listing.id }}</td>
-      <td>{{ listing.title }}</td>
-      <td>{{ listing.price | currency }}</td>
-      <td>{{ listing.category_id }}</td>
-      <td>
-        <button (click)="deleteListing(listing.id, listing.category_id)">Delete</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <ng-template #noUsers>
+    <p>No users available.</p>
+  </ng-template>
+
+  <hr>
+
+  <!-- Listings Management Section -->
+  <h3>Listings</h3>
+  <div *ngIf="isLoadingListings; else listingsTable">
+    <p>Loading listings...</p>
+  </div>
+
+  <ng-template #listingsTable>
+    <table *ngIf="listings.length > 0; else noListings">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let listing of listings">
+          <td>{{ listing.id }}</td>
+          <td>{{ listing.name }}</td>
+          <td>{{ listing.price | currency }}</td>
+          <td>{{ getCategoryName(listing.category_id) }}</td>
+          <td>
+            <button (click)="deleteListing(listing.id, listing.main_category)" class="btn btn-danger">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </ng-template>
+
+  <ng-template #noListings>
+    <p>No listings available.</p>
+  </ng-template>
+</div>
