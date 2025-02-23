@@ -1,1 +1,28 @@
-<router-outlet></router-outlet>
+<div class="app-container">
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <a routerLink="/dashboard" class="logo">Marketplace</a>
+      
+      <div class="nav-links">
+        <a routerLink="/listings" routerLinkActive="active">Listings</a>
+        <a *ngIf="authService.isLoggedIn()" routerLink="/listings/add-listing" routerLinkActive="active">Add Listing</a>
+        <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active">Admin Panel</a>
+      </div>
+  
+      <div class="auth-links">
+        <button *ngIf="!authService.isLoggedIn()" routerLink="/auth/login" class="btn btn-login">Login</button>
+        <button *ngIf="!authService.isLoggedIn()" routerLink="/auth/register" class="btn btn-register">Register</button>
+        <button *ngIf="authService.isLoggedIn()" (click)="logout()" class="btn btn-logout">Logout</button>
+      </div>
+    </nav>
+  
+    <!-- Page Content -->
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+  
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2025 Marketplace. All rights reserved.</p>
+    </footer>
+  </div>
