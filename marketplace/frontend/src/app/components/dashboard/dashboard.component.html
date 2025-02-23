@@ -1,5 +1,39 @@
-<h2>Welcome to the Dashboard</h2>
-<p>User Info will be displayed here</p>
-
-<!-- Button to navigate to Listings -->
-<button routerLink="/listings">Go to Listings</button>
+<div class="dashboard-container">
+    <h2>Dashboard</h2>
+  
+    <!-- Welcome Message -->
+    <p>Welcome back, <strong>{{ user?.full_name }}</strong>!</p>
+  
+    <!-- Quick Actions -->
+    <div class="dashboard-actions">
+      <button routerLink="/listings/add-listing" class="btn btn-success">Create New Listing</button>
+      <button *ngIf="isAdmin()" routerLink="/admin" class="btn btn-warning">Admin Panel</button>
+      <button (click)="logout()" class="btn btn-danger">Logout</button>
+    </div>
+  
+    <hr>
+  
+    <!-- User Listings -->
+    <h3>Your Listings</h3>
+    <div *ngIf="listings.length > 0; else noListings">
+      <div *ngFor="let listing of listings" class="listing-item">
+        <h4>{{ listing.name }}</h4>
+        <img *ngIf="listing.image_url" [src]="listing.image_url" alt="{{ listing.name }}" class="listing-image"/>
+  
+        <p><strong>Category:</strong> {{ getCategoryName(listing.category_id) }}</p>
+        <p *ngIf="listing.subcategory_id"><strong>Subcategory:</strong> {{ getSubCategoryName(listing.subcategory_id) }}</p>
+        <p><strong>Price:</strong> {{ listing.price | currency }}</p>
+        <p><strong>Posted On:</strong> {{ listing.created_at | date }}</p>
+  
+        <div class="listing-actions">
+          <button (click)="editListing(listing.id)" class="btn btn-primary">Edit</button>
+          <button (click)="deleteListing(listing.id, listing.main_category)" class="btn btn-danger">Delete</button>
+          <button routerLink="/listings/{{listing.id}}" class="btn btn-info">View Details</button>
+        </div>
+      </div>
+    </div>
+  
+    <ng-template #noListings>
+      <p>You have no active listings.</p>
+    </ng-template>
+  </div>
